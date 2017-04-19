@@ -1,0 +1,2 @@
+rootProject.name = 'jetlang'
+include 'core', 'editor'

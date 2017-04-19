@@ -1,0 +1,6 @@
+.idea
+.gradle
+
+/build
+/core/build
+/editor/build

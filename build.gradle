@@ -1,0 +1,23 @@
+version '1.0-SNAPSHOT'
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '3.3'
+	distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+}
+
+allprojects {
+	group 'com.xseagullx.jetlang'
+
+	apply plugin: 'java'
+	sourceCompatibility = 1.8
+
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		testCompile 'junit:junit:4.12'
+	}
+}
+
+
