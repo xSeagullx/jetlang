@@ -1,3 +1,16 @@
+apply plugin: 'antlr'
+apply plugin: 'groovy'
+
 dependencies {
+	antlr 'org.antlr:antlr4:4.7'
 	compile 'org.antlr:antlr4-runtime:4.7'
+	testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+}
+
+sourceSets { main { java { srcDir "$buildDir/generated-src/main/java" } } }
+
+
+// Workaround until https://issues.gradle.org/browse/GRADLE-3345 is resolved
+generateGrammarSource {
+	outputDirectory = file("$buildDir/generated-src/main/java/com/xseagullx/jetlang")
 }
