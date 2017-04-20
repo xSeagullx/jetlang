@@ -4,7 +4,9 @@ lexer grammar JetLangLexer;
 	package com.xseagullx.jetlang;
 }
 
+
 STRING: '"' .*? '"' ;
+WS:  [ \t]+ -> skip ;
 
 // Numbers
 fragment SIGN: ('-'|'+') ;
@@ -38,7 +40,6 @@ KW_PRINT: 'print' ;
 KW_VAR: 'var' ;
 KW_OUT: 'out' ;
 
-WS:  [ \t]+ -> skip ;
 NL: '\r'? '\n' ;
 
 IDENTIFIER: [A-Za-z_][A-Za-z_0-9]* ;
