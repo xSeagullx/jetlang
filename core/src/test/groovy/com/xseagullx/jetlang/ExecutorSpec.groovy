@@ -85,12 +85,13 @@ class ExecutorSpec extends Specification {
 
 	def "execute example program"() {
 		setup: "Calc pi same way, as in program"
-		def expectedMap = (1..5).toList().collect { (((-1.0d) ** it as double) / (2.0 * it + 1)) as double }
+		def expectedMap = (0..150).toList().collect { (((-1.0d) ** it as double) / (2.0 * it + 1)) as double }
 		def expectedPi = 4 * expectedMap.inject(0) { acc, it -> acc + it }
+		println(expectedPi)
 
 		def text = """
-		var n = 5
-		var sequence = map({1, n}, i -> (-1)^i / (2 * i + 1))
+		var n = 150
+		var sequence = map({0, n}, i -> (-1)^i / (2 * i + 1))
 		var pi = 4 * reduce(sequence, 0, x y -> x + y)
 		print "pi = "
 		out pi
@@ -100,7 +101,7 @@ class ExecutorSpec extends Specification {
 		execute(text)
 
 		then: "values are computed correctly"
-		context.getVariable("n") == 5
+		context.getVariable("n") == 150
 		(context.getVariable("sequence") as Sequence).list == expectedMap
 		context.getVariable("pi") == expectedPi
 
