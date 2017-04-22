@@ -9,7 +9,7 @@ import java.util.Stack;
 public class SimpleExecutionContext implements ExecutionContext {
 	private Stack<Map<String, Object>> variables = new Stack<>();
 
-	SimpleExecutionContext() {
+	protected SimpleExecutionContext() {
 		push();
 	}
 
