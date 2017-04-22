@@ -6,13 +6,14 @@ import java.util.function.Consumer;
 
 class ActionManager {
 	enum Action {
+		NEW,
 		SAVE,
 		OPEN,
 		QUIT,
 		RUN
 	}
 
-	private Map<Action, Consumer<Action>> actionMap = new HashMap<>();
+	private final Map<Action, Consumer<Action>> actionMap = new HashMap<>();
 
 	void fire(Action action) {
 		Consumer<Action> actionConsumer = actionMap.get(action);
