@@ -125,11 +125,16 @@ class ExecutorSpec extends Specification {
 
 		where:
 		text || errorMessage
-		"var a = 5 + {1, 3}" || "binary op: PLUS cannot be applied to [5, [1, 2, 3]]"
-		"var a = 5.0 + {1, 3}" || "binary op: PLUS cannot be applied to [5.0, [1, 2, 3]]"
-		"var a = {1, 3} + {6, 8}" || "binary op: PLUS cannot be applied to [[1, 2, 3], [6, 7, 8]]" // it would be cool to have a concatenation here
-		"var a = map(1, i -> i)" || "First argument to map shall be a sequence: Found: 1"
-		"var a = reduce(1, 1, i a -> i)" || "First argument to reduce shall be a sequence: Found: 1"
+		"var a = {1.2, 3}"                  || "Cannot create range form non-integer bounds {1.2, 3}"
+		"var a = {1, 3.2}"                  || "Cannot create range form non-integer bounds {1, 3.2}"
+		"var a = {1, {2, 3}}"               || "Cannot create range form non-integer bounds {1, [2, 3]}"
+		"var a = {{1, 3}, 2}"               || "Cannot create range form non-integer bounds {[1, 2, 3], 2}"
+		"var a = {3, 2}"                    || "Cannot create range. Bounds are inverse {3, 2}"
+		"var a = 5 + {1, 3}"                || "binary op: PLUS cannot be applied to [5, [1, 2, 3]]"
+		"var a = 5.0 + {1, 3}"              || "binary op: PLUS cannot be applied to [5.0, [1, 2, 3]]"
+		"var a = {1, 3} + {6, 8}"           || "binary op: PLUS cannot be applied to [[1, 2, 3], [6, 7, 8]]" // it would be cool to have a concatenation here
+		"var a = map(1, i -> i)"            || "First argument to map shall be a sequence: Found: 1"
+		"var a = reduce(1, 1, i a -> i)"    || "First argument to reduce shall be a sequence: Found: 1"
 	}
 
 	private execute(String program) {

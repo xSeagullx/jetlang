@@ -16,7 +16,7 @@ public class LambdaExpression {
 	Object apply(ExecutionContext context, Object ... args) {
 		context.push();
 		defineArgumentVariables(context, args);
-		Object res = body.exec(context);
+		Object res = context.exec(body);
 		context.pop();
 		return res;
 	}

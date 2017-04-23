@@ -10,6 +10,6 @@ public class OutStatement implements Statement {
 	}
 
 	@Override public void exec(ExecutionContext context) {
-		context.print(expression.exec(context));
+		context.print(context.exec(expression));
 	}
 }

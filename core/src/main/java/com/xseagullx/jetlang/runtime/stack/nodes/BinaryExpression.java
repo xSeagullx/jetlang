@@ -35,8 +35,8 @@ public class BinaryExpression implements Expression {
 	}
 
 	@Override public Object exec(ExecutionContext context) {
-		Object left = leftExpr.exec(context);
-		Object right = rightExpr.exec(context);
+		Object left = context.exec(leftExpr);
+		Object right = context.exec(rightExpr);
 		if (!(left instanceof Number) || !(right instanceof Number))
 			throw new JetLangException("binary op: " + operationType + " cannot be applied to [" + left + ", " + right + "]");
 

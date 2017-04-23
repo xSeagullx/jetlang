@@ -16,13 +16,13 @@ public class ReduceExpression implements Expression {
 	}
 
 	@Override public Object exec(ExecutionContext context) {
-		Object maybeSequence = sequenceExpr.exec(context);
+		Object maybeSequence = context.exec(sequenceExpr);
 		if (!(maybeSequence instanceof Sequence))
 			throw new JetLangException("First argument to reduce shall be a sequence: Found: " + maybeSequence);
 
 		Sequence sequence = (Sequence)maybeSequence;
 
-		Object initialValue = initialValueExpr.exec(context);
+		Object initialValue = context.exec(initialValueExpr);
 
 		return sequence.list.stream().reduce(initialValue, (acc, i) -> lambda.apply(context, acc, i));
 	}

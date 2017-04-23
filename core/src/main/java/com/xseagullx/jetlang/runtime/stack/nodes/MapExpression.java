@@ -16,7 +16,7 @@ public class MapExpression implements Expression {
 	}
 
 	@Override public Object exec(ExecutionContext context) {
-		Object maybeSequence = sequenceExpr.exec(context);
+		Object maybeSequence = context.exec(sequenceExpr);
 		if (!(maybeSequence instanceof Sequence))
 			throw new JetLangException("First argument to map shall be a sequence: Found: " + maybeSequence);
 

@@ -1,5 +1,8 @@
 package com.xseagullx.jetlang;
 
+import com.xseagullx.jetlang.runtime.stack.nodes.Expression;
+import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
+
 public interface ExecutionContext {
 	boolean isVariableDefined(String variableName);
 	void defineVariable(String name, Object value);
@@ -17,4 +20,7 @@ public interface ExecutionContext {
 	default void error(String value) {
 		System.err.println(value);
 	}
+
+	void exec(Statement statement);
+	Object exec(Expression expression);
 }

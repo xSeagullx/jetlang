@@ -15,7 +15,7 @@ public class VariableDeclaration implements Statement {
 		if (context.isVariableDefined(name))
 			throw new RuntimeException("Variable " + name + " is already defined");
 
-		context.defineVariable(name, expression.exec(context));
+		context.defineVariable(name, context.exec(expression));
 	}
 }
 
