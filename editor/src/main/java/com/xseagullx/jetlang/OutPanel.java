@@ -11,19 +11,19 @@ import java.awt.Component;
 import java.awt.Dimension;
 
 class OutPanel {
-	final StyledDocument outDocument;
+	final StyledDocument document;
 	private final StyleManager styleManager;
 
 	OutPanel(StyleManager styleManager) {
 		this.styleManager = styleManager;
-		outDocument = new DefaultStyledDocument();
+		document = new DefaultStyledDocument();
 	}
 
 	Component getComponent() {
 		JEditorPane editorPane = new JEditorPane();
 		editorPane.setCaretColor(styleManager.caretColor);
 		editorPane.setEditorKit(new StyledEditorKit());
-		editorPane.setDocument(outDocument);
+		editorPane.setDocument(document);
 		JScrollPane jScrollPane = new JScrollPane(editorPane);
 		jScrollPane.setPreferredSize(new Dimension(1024, 200)); // FIXME externalize
 		return jScrollPane;
@@ -31,7 +31,7 @@ class OutPanel {
 
 	void clear() {
 		try {
-			outDocument.remove(0, outDocument.getLength());
+			document.remove(0, document.getLength());
 		}
 		catch (BadLocationException e) {
 			throw new ProgrammersFault(e);
@@ -40,7 +40,7 @@ class OutPanel {
 
 	void print(String text, AttributeSet style) {
 		try {
-			outDocument.insertString(0, text, style);
+			document.insertString(document.getLength(), text, style);
 		}
 		catch (BadLocationException e) {
 			throw new ProgrammersFault(e);

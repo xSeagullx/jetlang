@@ -68,6 +68,7 @@ class HighlightingService {
 	private JetLangLexer getJetLangLexer(DocumentSnapshot documentSnapshot) {
 		JetLangLexer lexer;
 		try {
+			// CharStreams.fromString is bugged: https://github.com/antlr/antlr4/issues/1834
 			lexer = new JetLangLexer(CharStreams.fromReader(new StringReader(documentSnapshot.text)));
 		}
 		catch (IOException e) {
