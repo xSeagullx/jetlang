@@ -26,15 +26,23 @@ class HighlightTask implements Task {
 }
 
 class RunTask implements Task {
-	DocumentSnapshot documentSnapshot;
-	ExecutionContext context;
+	private DocumentSnapshot documentSnapshot;
+	private ExecutionContext context;
 
-	RunTask(DocumentSnapshot documentSnapshot) {
+	RunTask(DocumentSnapshot documentSnapshot, ExecutionContext context) {
 		this.documentSnapshot = documentSnapshot;
+		this.context = context;
 	}
 
 	@Override public void run() {
-		new StackMachineCompiler().parse(documentSnapshot.text).execute(context);
+		try {
+			context.print("Running...");
+			new StackMachineCompiler().parse(documentSnapshot.text).execute(context);
+			context.print("Execution finished.");
+		}
+		catch (Throwable e) {
+			context.print("Execution failed.");
+		}
 	}
 }
 
@@ -103,12 +111,13 @@ public class TaskManager {
 			notifyListeners(taskExecution);
 			log.info("Scheduling task: " + task);
 		}
-		taskExecution.start().thenRun(() -> {
+		taskExecution.start().handle((ignored, error) -> {
 			log.info("Removing task: " + task);
 			boolean removed = tasks.remove(taskClass, taskExecution);
-			taskExecution.status = TaskExecution.Status.SUCCEEDED;
+			taskExecution.status = error != null ? TaskExecution.Status.FAILED : TaskExecution.Status.SUCCEEDED;
 			notifyListeners(taskExecution);
 			log.info("Removing task: " + task + " " + (removed ? "Success" : "Failure"));
+			return null;
 			}
 		);
 	}

@@ -19,8 +19,7 @@ class StackBasedProgram implements Program {
 
 	@Override public void execute(ExecutionContext existingContext) {
 		ExecutionContext context = existingContext != null ? existingContext : new SimpleExecutionContext();
-		for (Statement statement : statements) {
+		for (Statement statement : statements)
 			context.exec(statement);
-		}
 	}
 }

@@ -12,9 +12,6 @@ public class VariableDeclaration extends Statement {
 	}
 
 	@Override public void exec(ExecutionContext context) {
-		if (context.isVariableDefined(name))
-			throw new RuntimeException("Variable " + name + " is already defined");
-
 		context.defineVariable(name, context.exec(expression));
 	}
 }

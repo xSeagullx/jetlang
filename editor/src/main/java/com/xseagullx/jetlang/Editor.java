@@ -85,19 +85,17 @@ class Editor {
 		progressBar.setVisible(false);
 		lowerPanel.setPreferredSize(new Dimension(1024, 20));
 
-		taskManager.subscribe((it) -> {
-			SwingUtilities.invokeLater(() -> {
-				List<TaskExecution> runningTasks = taskManager.runningTasks().stream()
-					.filter(task -> task.status == TaskExecution.Status.SCHEDULED || task.status == TaskExecution.Status.RUNNING)
-					.collect(Collectors.toList());
-				boolean nothingRunning = runningTasks.isEmpty();
-				progressBar.setIndeterminate(!nothingRunning);
-				progressBar.setVisible(!nothingRunning);
-				progressLabel.setVisible(!nothingRunning);
-				progressLabel.setText(runningTasks.size() == 1 ? runningTasks.get(0).getName() : runningTasks.size() + " processes: ");
-				lowerPanel.validate();
-			});
-		});
+		taskManager.subscribe((it) -> SwingUtilities.invokeLater(() -> {
+			List<TaskExecution> runningTasks = taskManager.runningTasks().stream()
+				.filter(task -> task.status == TaskExecution.Status.SCHEDULED || task.status == TaskExecution.Status.RUNNING)
+				.collect(Collectors.toList());
+			boolean nothingRunning = runningTasks.isEmpty();
+			progressBar.setIndeterminate(!nothingRunning);
+			progressBar.setVisible(!nothingRunning);
+			progressLabel.setVisible(!nothingRunning);
+			progressLabel.setText(runningTasks.size() == 1 ? runningTasks.get(0).getName() : runningTasks.size() + " processes: ");
+			lowerPanel.validate();
+		}));
 		lowerPanel.add(progressLabel, BorderLayout.WEST);
 		lowerPanel.add(progressBar, BorderLayout.CENTER);
 		miscPanel.add(lowerPanel, BorderLayout.SOUTH);
@@ -161,7 +159,6 @@ class Editor {
 		};
 
 		outputPanel.clear();
-		outputPanel.print("Running...\n", styleManager.main);
 
 		runService.execute(editPanel.getDocumentSnapshot(), simpleExecutionContext);
 	}

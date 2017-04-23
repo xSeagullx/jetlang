@@ -8,8 +8,7 @@ class RunService {
 	}
 
 	void execute(DocumentSnapshot documentSnapshot, ExecutionContext context) {
-		RunTask runTask = new RunTask(documentSnapshot);
-		runTask.context = context;
+		RunTask runTask = new RunTask(documentSnapshot, context);
 		taskManager.run(runTask);
 	}
 }

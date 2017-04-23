@@ -66,6 +66,10 @@ public class SimpleExecutionContext implements ExecutionContext {
 			error(e.getDetailedMessage());
 			throw e;
 		}
+		catch (Throwable e) {
+			error("Fatal runtime exception while executing " + expression + "\n" + e.getMessage());
+			throw e;
+		}
 	}
 
 	@Override public Exception exception(String message, TokenInformationHolder astNode) {
