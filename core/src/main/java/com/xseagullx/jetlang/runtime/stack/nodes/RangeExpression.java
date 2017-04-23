@@ -4,7 +4,7 @@ import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.JetLangException;
 import com.xseagullx.jetlang.Sequence;
 
-public class RangeExpression implements Expression {
+public class RangeExpression extends Expression {
 	private final Expression from;
 	private final Expression to;
 
@@ -17,11 +17,11 @@ public class RangeExpression implements Expression {
 		Object fromVal = context.exec(from);
 		Object toVal = context.exec(to);
 		if (!(fromVal instanceof Integer) || !(toVal instanceof Integer))
-			throw new JetLangException("Cannot create range form non-integer bounds {" + fromVal +", " + toVal + "}");
+			throw new JetLangException("Cannot create range form non-integer bounds {" + fromVal +", " + toVal + "}", this);
 		Integer from = (Integer)fromVal;
 		Integer to = (Integer)toVal;
 		if (from > to)
-			throw new JetLangException("Cannot create range. Bounds are inverse {" + from +", " + to + "}");
+			throw new JetLangException("Cannot create range. Bounds are inverse {" + from +", " + to + "}", this);
 
 		return new Sequence(from, to);
 	}

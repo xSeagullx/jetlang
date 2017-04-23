@@ -4,7 +4,7 @@ import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.JetLangParser;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class InvalidStatement implements Statement {
+public class InvalidStatement extends Statement {
 	public InvalidStatement(Class<? extends JetLangParser.StmtContext> aClass, String text, ParserRuleContext context) {
 	}
 

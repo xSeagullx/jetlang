@@ -2,7 +2,7 @@ package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
 
-public class OutStatement implements Statement {
+public class OutStatement extends Statement {
 	private final Expression expression;
 
 	public OutStatement(Expression expression) {

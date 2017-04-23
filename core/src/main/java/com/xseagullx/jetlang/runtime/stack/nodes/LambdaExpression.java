@@ -1,10 +1,11 @@
 package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
+import com.xseagullx.jetlang.TokenInformationHolder;
 
 import java.util.List;
 
-public class LambdaExpression {
+public class LambdaExpression extends TokenInformationHolder {
 	private final List<String> variableNames;
 	private final Expression body;
 
@@ -14,7 +15,7 @@ public class LambdaExpression {
 	}
 
 	Object apply(ExecutionContext context, Object ... args) {
-		context.push();
+		context.push(this);
 		defineArgumentVariables(context, args);
 		Object res = context.exec(body);
 		context.pop();

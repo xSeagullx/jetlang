@@ -2,7 +2,7 @@ package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
 
-public class InvalidExpression implements Expression {
+public class InvalidExpression extends Expression {
 	private final String message;
 
 	public InvalidExpression(String message) {

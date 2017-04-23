@@ -9,7 +9,7 @@ public interface ExecutionContext {
 	Object getVariable(String text);
 
 	/** Pushes new scope to the context. (entered lambda) */
-	void push();
+	void push(TokenInformationHolder tokenInformation);
 	/** Pops current scope from context. (exited lambda) */
 	void pop();
 
@@ -23,4 +23,6 @@ public interface ExecutionContext {
 
 	void exec(Statement statement);
 	Object exec(Expression expression);
+
+	Exception exception(String message, TokenInformationHolder astNode);
 }

@@ -8,7 +8,7 @@ interface BinaryOperation {
 	Number apply(Number left, Number right);
 }
 
-public class BinaryExpression implements Expression {
+public class BinaryExpression extends Expression {
 	public enum OperationType {
 		PLUS, MINUS, MUL, DIV, POW
 	}
@@ -38,7 +38,7 @@ public class BinaryExpression implements Expression {
 		Object left = context.exec(leftExpr);
 		Object right = context.exec(rightExpr);
 		if (!(left instanceof Number) || !(right instanceof Number))
-			throw new JetLangException("binary op: " + operationType + " cannot be applied to [" + left + ", " + right + "]");
+			throw new JetLangException("binary op: " + operationType + " cannot be applied to [" + left + ", " + right + "]", this);
 
 		return applyOperation((Number)left, (Number)right);
 	}
@@ -53,7 +53,7 @@ public class BinaryExpression implements Expression {
 		case DIV: op = hasDouble ? DOUBLE_DIV : INT_DIV; break;
 		case POW: op = DOUBLE_POW; break;
 		default:
-			throw new JetLangException("Unsupported Operation type: " + operationType);
+			throw new JetLangException("Unsupported Operation type: " + operationType, this);
 		}
 		return op.apply(a, b);
 	}

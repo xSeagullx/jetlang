@@ -1,7 +1,8 @@
 package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
+import com.xseagullx.jetlang.TokenInformationHolder;
 
-public interface Expression {
-	Object exec(ExecutionContext context);
+public abstract class Expression extends TokenInformationHolder {
+	public abstract Object exec(ExecutionContext context);
 }

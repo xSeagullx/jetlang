@@ -2,7 +2,7 @@ package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
 
-public class ConstExpression<T> implements Expression {
+public class ConstExpression<T> extends Expression {
 	private final T value;
 
 	public ConstExpression(T value) {
