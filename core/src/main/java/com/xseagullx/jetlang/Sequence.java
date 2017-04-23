@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Sequence {
 	private static final int MAX_SIZE_FOR_TO_STRING = 40;
@@ -22,9 +23,16 @@ public class Sequence {
 	}
 
 	@Override public String toString() {
-		if (list.size() > MAX_SIZE_FOR_TO_STRING)
-			return "{" + list.get(0) + ", " + list.get(list.size() - 1) + "}";
+		if (list.size() > MAX_SIZE_FOR_TO_STRING) {
+			String first = join(list.stream().limit(MAX_SIZE_FOR_TO_STRING / 2));
+			String last = join(list.stream().skip(MAX_SIZE_FOR_TO_STRING / 2));
+			return "[" + first + " ... " + last + "]";
+		}
 		else
-			return list.stream().map(Object::toString).collect(Collectors.joining(", "));
+			return "[" + join(list.stream()) + "]";
+	}
+
+	private String join(Stream<Object> list) {
+		return list.map(Object::toString).collect(Collectors.joining(", "));
 	}
 }

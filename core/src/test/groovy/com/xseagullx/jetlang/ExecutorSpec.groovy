@@ -39,29 +39,33 @@ class ExecutorSpec extends Specification {
 		sequence.list == [1, 2, 3, 4, 5]
 	}
 
+	@SuppressWarnings("GroovyAssignabilityCheck")
 	@Unroll("Check that #expression == #result")
 	def "operators"() {
 		when:
 		execute("var a = " + expression)
 
 		then: "state is preserved"
-		context.getVariable("a") == result
+		def aValue = context.getVariable("a")
+		aValue == result
+		aValue.getClass() == resultType
 
 		where:
-		expression          || result
-		"1 + 2"             || 3
-		"42 - 12"           || 30
-		"4 * 2"             || 8
-		"14 / 2"            || 7
-		"2 ^ 8"             || 256
-		"1.2 + 4.7"         || 5.9
-		"1.2 - 4.7"         || -3.5
-		"-1.2 - 4.7"        || -5.9
-		"-1.2 + 4.7"        || 3.5
-		"-1.2 * -7.8"       || -1.2 * -7.8
-		"2 * 3 + 1"         || 7
-		"2 * 3 + 1 / 4"     || 6.25
-		"2 * (3 + 1) / 4"   || 2
+		expression          || result       | resultType
+		"1 + 2"             || 3            | Integer
+		"42 - 12"           || 30           | Integer
+		"4 * 2"             || 8            | Integer
+		"14 / 3"            || 4            | Integer
+		"2 ^ 8"             || 256          | Double
+		"25 ^ 0.5"          || 5            | Double
+		"1.2 + 4.7"         || 5.9          | Double
+		"1.2 - 4.7"         || -3.5         | Double
+		"-1.2 - 4.7"        || -5.9         | Double
+		"-1.2 + 4.7"        || 3.5          | Double
+		"-1.2 * -7.8"       || -1.2 * -7.8  | Double
+		"2 * 3 + 1"         || 7            | Integer
+		"2 * 3 + 1 / 4.0"   || 6.25         | Double
+		"2 * (3 + 1) / 4"   || 2            | Integer
 	}
 
 	@Unroll("Map #expr to #result")
@@ -108,6 +112,24 @@ class ExecutorSpec extends Specification {
 		and: "there was an output"
 		1 * context.print("pi = ")
 		1 * context.print(expectedPi)
+	}
+
+	@Unroll("#text produces error: '#errorMessage'")
+	def "error handling"() {
+		when:
+		execute(text)
+
+		then:
+		def e = thrown(JetLangException)
+		e.message == errorMessage
+
+		where:
+		text || errorMessage
+		"var a = 5 + {1, 3}" || "binary op: PLUS cannot be applied to [5, [1, 2, 3]]"
+		"var a = 5.0 + {1, 3}" || "binary op: PLUS cannot be applied to [5.0, [1, 2, 3]]"
+		"var a = {1, 3} + {6, 8}" || "binary op: PLUS cannot be applied to [[1, 2, 3], [6, 7, 8]]" // it would be cool to have a concatenation here
+		"var a = map(1, i -> i)" || "First argument to map shall be a sequence: Found: 1"
+		"var a = reduce(1, 1, i a -> i)" || "First argument to reduce shall be a sequence: Found: 1"
 	}
 
 	private execute(String program) {
