@@ -2,18 +2,25 @@ package com.xseagullx.jetlang;
 
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FontFormatException;
 import java.awt.Label;
+import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -34,6 +41,7 @@ class Editor {
 
 	private OutPanel outputPanel;
 	private EditPanel editPanel;
+	private File file;
 
 	Editor() throws IOException, FontFormatException {
 		outputPanel = new OutPanel(styleManager);
@@ -49,8 +57,8 @@ class Editor {
 
 		actionManager.register(ActionManager.Action.RUN, (action) -> runProgram());
 		actionManager.register(ActionManager.Action.QUIT, (action) -> frame.dispose());
-		actionManager.register(ActionManager.Action.OPEN, (action) -> frame.dispose());
-		actionManager.register(ActionManager.Action.SAVE, (action) -> frame.dispose());
+		actionManager.register(ActionManager.Action.OPEN, (action) -> openFileDialog(frame));
+		actionManager.register(ActionManager.Action.SAVE, (action) -> saveFile(frame, editPanel.getDocumentSnapshot().text));
 	}
 
 	private JFrame createFrame() {
@@ -103,13 +111,52 @@ class Editor {
 		return miscPanel;
 	}
 
-	void open() throws Exception {
-		String program = "var n = 150\n" +
-			"var sequence = map({0, n}, i -> (-1)^i / (2 * i + 1))\n" +
-			"var pi = 4 * reduce(sequence, 0, x y -> x + y)\n" +
-			"print \"pi = \"\n" +
-			"out pi\n";
-		editPanel.setText(program);
+	void open(File file) {
+		if (file != null) {
+			try {
+				byte[] encoded = Files.readAllBytes(Paths.get(file.getPath()));
+				String text = new String(encoded, "UTF-8");
+				this.file = file;
+				editPanel.setText(text);
+			}
+			catch (UnsupportedEncodingException e) {
+				throw new ProgrammersFault(e);
+			}
+			catch (IOException e) {
+				throw new RuntimeException(e); // todo show in ide
+			}
+		}
+	}
+
+	private void saveFile(JFrame frame, String text) {
+		if (file == null) {
+			JFileChooser chooser = new JFileChooser();
+			int returnVal = chooser.showSaveDialog(frame);
+			if (returnVal == JFileChooser.APPROVE_OPTION)
+				file = chooser.getSelectedFile();
+		}
+
+		if (file == null)
+			return;
+
+		try {
+			Files.write(Paths.get(file.getPath()), text.getBytes("UTF-8"));
+			JOptionPane.showMessageDialog(frame, "File saved");
+		}
+		catch (UnsupportedEncodingException e) {
+			throw new ProgrammersFault(e);
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e); // todo show in ide
+		}
+	}
+
+	void openFileDialog(JFrame frame) {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setFileFilter(new FileNameExtensionFilter("JL and plain text files", "js", "txt"));
+		int returnVal = chooser.showOpenDialog(frame);
+		if (returnVal == JFileChooser.APPROVE_OPTION)
+			open(chooser.getSelectedFile());
 	}
 
 	private void highlight() {
