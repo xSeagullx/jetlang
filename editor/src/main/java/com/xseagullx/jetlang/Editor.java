@@ -11,7 +11,6 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.text.BadLocationException;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FontFormatException;
@@ -23,14 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /** High level component managing editor interactions */
 class Editor {
-	// TODO Привязать ошибки выполнения к выражению их породившему.
 	// TODO Добавить окно ошибок компиляции
-	// TODO CTrl шорткаты для Windows.
+	// TODO CTrl шорткаты для Windows. Парсинг конфига из JSON
+	// TODO create distribution for editor and compiler
 
 	private final StyleManager styleManager = new StyleManager();
 	private final ActionManager actionManager = new ActionManager();
@@ -120,7 +118,7 @@ class Editor {
 				editPanel.setText(text);
 			}
 			catch (UnsupportedEncodingException e) {
-				throw new ProgrammersFault(e);
+				throw new ThisShouldNeverHappenException(e);
 			}
 			catch (IOException e) {
 				throw new RuntimeException(e); // todo show in ide
@@ -144,53 +142,23 @@ class Editor {
 			JOptionPane.showMessageDialog(frame, "File saved");
 		}
 		catch (UnsupportedEncodingException e) {
-			throw new ProgrammersFault(e);
+			throw new ThisShouldNeverHappenException(e);
 		}
 		catch (IOException e) {
 			throw new RuntimeException(e); // todo show in ide
 		}
 	}
 
-	void openFileDialog(JFrame frame) {
+	private void openFileDialog(JFrame frame) {
 		JFileChooser chooser = new JFileChooser();
-		chooser.setFileFilter(new FileNameExtensionFilter("JL and plain text files", "js", "txt"));
+		chooser.setFileFilter(new FileNameExtensionFilter("JL and plain text files", "jl", "txt"));
 		int returnVal = chooser.showOpenDialog(frame);
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			open(chooser.getSelectedFile());
 	}
 
 	private void highlight() {
-		// Increment highlight counter
-		// Get text
-		// Pass it to highlighter task
-		// When ready
-		// if task.counter ==  current.counter
-		//  highlight document
-		// else
-		// discard changes (next highlight task is scheduled)
-		// in case of error - show error.
-
-		// Following code is used only for debug. //FIXME
-		outputPanel.clear();
-		Consumer<String> showErrorInOutputPane = (error) -> {
-			try {
-				outputPanel.document.insertString(outputPanel.document.getLength(), error, styleManager.error);
-			}
-			catch (BadLocationException e) {
-				e.printStackTrace();
-			}
-		};
-		Consumer<String> showInOutputPane = (error) -> {
-			try {
-				outputPanel.document.insertString(outputPanel.document.getLength(), error, styleManager.main);
-			}
-			catch (BadLocationException e) {
-				e.printStackTrace();
-			}
-		};
-		// end of debug code
-
-		Collection<StyledChunk> highlighterResults = highlightingService.highlight(editPanel.getDocumentSnapshot(), showInOutputPane, showErrorInOutputPane);
+		Collection<StyledChunk> highlighterResults = highlightingService.highlight(editPanel.getDocumentSnapshot());
 		editPanel.applyHighlighting(highlighterResults);
 	}
 

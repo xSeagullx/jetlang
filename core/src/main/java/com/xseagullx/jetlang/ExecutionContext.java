@@ -24,5 +24,5 @@ public interface ExecutionContext {
 	void exec(Statement statement);
 	Object exec(Expression expression);
 
-	Exception exception(String message, TokenInformationHolder astNode);
+	JetLangException exception(String message, TokenInformationHolder holder);
 }

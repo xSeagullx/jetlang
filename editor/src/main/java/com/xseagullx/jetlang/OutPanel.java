@@ -11,7 +11,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 
 class OutPanel {
-	final StyledDocument document;
+	private final StyledDocument document;
 	private final StyleManager styleManager;
 
 	OutPanel(StyleManager styleManager) {
@@ -34,7 +34,7 @@ class OutPanel {
 			document.remove(0, document.getLength());
 		}
 		catch (BadLocationException e) {
-			throw new ProgrammersFault(e);
+			throw new ThisShouldNeverHappenException(e);
 		}
 	}
 
@@ -43,7 +43,7 @@ class OutPanel {
 			document.insertString(document.getLength(), text, style);
 		}
 		catch (BadLocationException e) {
-			throw new ProgrammersFault(e);
+			throw new ThisShouldNeverHappenException(e);
 		}
 	}
 }

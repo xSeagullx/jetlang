@@ -1,0 +1,31 @@
+{
+  "width": 1024,
+  "height": 1024,
+  "styles": {
+    "backgroundColor": "#2B2B2B",
+    "caretColor": "#BBBBBB",
+    "main": {
+      "fontSize": 14,
+      "fontFamily": "default",
+      "foreground": "#A9B7C6"
+    },
+    "keyword": {
+      "extends": "main",
+      "foreground": "#CC7832",
+      "bold": true
+    },
+    "number": {
+      "extends": "main",
+      "foreground": "#6897BB"
+    },
+    "string": {
+      "extends": "main",
+      "foreground": "#6A8759"
+    },
+    "error": {
+      "extends": "main",
+      "foreground": "#BC3F3C",
+      "underline": true
+    }
+  }
+}

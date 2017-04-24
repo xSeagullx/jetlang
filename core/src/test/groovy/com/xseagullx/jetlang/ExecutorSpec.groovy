@@ -141,6 +141,6 @@ class ExecutorSpec extends Specification {
 	}
 
 	private execute(String program) {
-		new StackMachineCompiler().parse(program).execute(context)
+		new StackMachineCompiler().parse(program).program.execute(context)
 	}
 }

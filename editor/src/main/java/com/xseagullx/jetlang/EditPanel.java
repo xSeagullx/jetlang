@@ -17,7 +17,7 @@ import java.util.function.BiConsumer;
 
 class DocumentSnapshot {
 	final String text;
-	final int lineOffsets[];
+	private final int lineOffsets[];
 
 	DocumentSnapshot(String text, int[] lineOffsets) {
 		this.text = text;
@@ -78,7 +78,7 @@ class EditPanel {
 			document.insertString(0, text, null);
 		}
 		catch (BadLocationException e) {
-			throw new ProgrammersFault(e);
+			throw new ThisShouldNeverHappenException(e);
 		}
 	}
 
@@ -94,7 +94,7 @@ class EditPanel {
 			text = document.getText(0, document.getLength());
 		}
 		catch (BadLocationException e) {
-			throw new ProgrammersFault(e);
+			throw new ThisShouldNeverHappenException(e);
 		}
 
 		Element defaultRootElement = document.getDefaultRootElement();
@@ -106,7 +106,7 @@ class EditPanel {
 		return new DocumentSnapshot(text, lineStartPositions);
 	}
 
-	public void setCaretPositionListener(BiConsumer<Integer, Integer> caretPositionListener) {
+	void setCaretPositionListener(BiConsumer<Integer, Integer> caretPositionListener) {
 		this.caretPositionListener = caretPositionListener;
 	}
 }

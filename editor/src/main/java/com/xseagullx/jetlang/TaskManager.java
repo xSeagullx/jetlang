@@ -2,7 +2,6 @@ package com.xseagullx.jetlang;
 
 import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,9 +35,17 @@ class RunTask implements Task {
 
 	@Override public void run() {
 		try {
-			context.print("Running...");
-			new StackMachineCompiler().parse(documentSnapshot.text).execute(context);
-			context.print("Execution finished.");
+			context.print("Building...");
+			CompilationResult compilationResult = new StackMachineCompiler().parse(documentSnapshot.text);
+			if (compilationResult.hasErrors()) {
+				for (ParseError it : compilationResult.errors)
+					context.error(it.toString());
+			}
+			else {
+				context.print("Running...");
+				compilationResult.program.execute(context);
+				context.print("Execution finished.");
+			}
 		}
 		catch (Throwable e) {
 			context.print("Execution failed.");
@@ -58,7 +65,6 @@ class TaskExecution {
 	private final Task task;
 	public Status status;
 	private CompletableFuture<Void> future;
-	LocalDateTime startTime = LocalDateTime.now();
 
 	TaskExecution(Task task) {
 		this.task = task;
@@ -72,7 +78,6 @@ class TaskExecution {
 	/** Return an info-only copy of this object */
 	TaskExecution copy() {
 		TaskExecution taskExecution = new TaskExecution(task);
-		taskExecution.startTime = startTime;
 		taskExecution.status = status;
 		return taskExecution;
 	}

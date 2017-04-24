@@ -1,7 +1,6 @@
 package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
-import com.xseagullx.jetlang.JetLangException;
 import com.xseagullx.jetlang.Sequence;
 
 import java.util.stream.Collectors;
@@ -18,7 +17,7 @@ public class MapExpression extends Expression {
 	@Override public Object exec(ExecutionContext context) {
 		Object maybeSequence = context.exec(sequenceExpr);
 		if (!(maybeSequence instanceof Sequence))
-			throw new JetLangException("First argument to map shall be a sequence: Found: " + maybeSequence, this);
+			throw context.exception("First argument to map shall be a sequence: Found: " + maybeSequence, this);
 
 		Sequence sequence = (Sequence)maybeSequence;
 		return new Sequence(sequence.list.stream().map( i -> lambda.apply(context, i)).collect(Collectors.toList()));

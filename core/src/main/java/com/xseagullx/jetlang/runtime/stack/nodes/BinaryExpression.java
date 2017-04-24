@@ -1,7 +1,6 @@
 package com.xseagullx.jetlang.runtime.stack.nodes;
 
 import com.xseagullx.jetlang.ExecutionContext;
-import com.xseagullx.jetlang.JetLangException;
 
 @FunctionalInterface
 interface BinaryOperation {
@@ -38,12 +37,12 @@ public class BinaryExpression extends Expression {
 		Object left = context.exec(leftExpr);
 		Object right = context.exec(rightExpr);
 		if (!(left instanceof Number) || !(right instanceof Number))
-			throw new JetLangException("binary op: " + operationType + " cannot be applied to [" + left + ", " + right + "]", this);
+			throw context.exception("binary op: " + operationType + " cannot be applied to [" + left + ", " + right + "]", this);
 
-		return applyOperation((Number)left, (Number)right);
+		return applyOperation((Number)left, (Number)right, context);
 	}
 
-	private Number applyOperation(Number a, Number b) {
+	private Number applyOperation(Number a, Number b, ExecutionContext context) {
 		boolean hasDouble = a instanceof Double || b instanceof Double;
 		BinaryOperation op;
 		switch (operationType) {
@@ -53,7 +52,7 @@ public class BinaryExpression extends Expression {
 		case DIV: op = hasDouble ? DOUBLE_DIV : INT_DIV; break;
 		case POW: op = DOUBLE_POW; break;
 		default:
-			throw new JetLangException("Unsupported Operation type: " + operationType, this);
+			throw context.exception("Unsupported Operation type: " + operationType, this);
 		}
 		return op.apply(a, b);
 	}

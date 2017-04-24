@@ -1,19 +1,9 @@
 package com.xseagullx.jetlang;
 
-import org.antlr.v4.runtime.BaseErrorListener;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.Recognizer;
-import org.antlr.v4.runtime.Token;
-
 import javax.swing.text.AttributeSet;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Consumer;
 
 class HighlightingService {
 	private final StyleManager styleManager;
@@ -30,20 +20,10 @@ class HighlightingService {
 		this.styleManager = styleManager;
 	}
 
-	Collection<StyledChunk> highlight(DocumentSnapshot documentSnapshot, Consumer<String> showInOutputPane, Consumer<String> showErrorInOutputPane) {
+	Collection<StyledChunk> highlight(DocumentSnapshot documentSnapshot) {
 		Collection<StyledChunk> results = new ArrayList<>();
 
-		JetLangLexer lexer = getJetLangLexer(documentSnapshot);
-		lexer.removeErrorListeners(); // remove default listeners, that print error to stderr.
-
-		lexer.addErrorListener(new BaseErrorListener() {
-			@Override public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-				showErrorInOutputPane.accept(line + ":" + (charPositionInLine + 1) + " ERROR: " + e + "\n");
-
-				int lineOffset = documentSnapshot.lineOffsets[line - 1];
-				results.add(new StyledChunk(lineOffset + charPositionInLine, 1, styleManager.error));
-			}
-		});
+		JetLangLexer lexer = Compiler.getJetLangLexer(documentSnapshot.text, null);
 
 		lexer.getAllTokens().forEach((it) -> {
 			AttributeSet style;
@@ -56,39 +36,20 @@ class HighlightingService {
 			else
 				style = styleManager.main;
 
-			showInOutputPane.accept(it.getStartIndex() + ":" + it.getStopIndex() + " " + JetLangLexer.VOCABULARY.getDisplayName(it.getType()) + " " + it.getText() + "\n");
 			results.add(new StyledChunk(it.getStartIndex(), it.getText().length(), style));
 		});
 
-		highlightParseErrors(documentSnapshot, results);
+		highlightErrors(documentSnapshot, results);
 
 		return results;
 	}
 
-	private JetLangLexer getJetLangLexer(DocumentSnapshot documentSnapshot) {
-		JetLangLexer lexer;
-		try {
-			// CharStreams.fromString is bugged: https://github.com/antlr/antlr4/issues/1834
-			lexer = new JetLangLexer(CharStreams.fromReader(new StringReader(documentSnapshot.text)));
-		}
-		catch (IOException e) {
-			throw new ProgrammersFault();
-		}
-		return lexer;
-	}
+	private void highlightErrors(DocumentSnapshot documentSnapshot, Collection<StyledChunk> results) {
+		CompilationResult compilationResult = Compiler.getErrors(documentSnapshot.text);
+		if (!compilationResult.hasErrors())
+			return;
 
-	private void highlightParseErrors(DocumentSnapshot documentSnapshot, Collection<StyledChunk> results) {
-		JetLangLexer lexer =  getJetLangLexer(documentSnapshot);
-		JetLangParser parser = new JetLangParser(new CommonTokenStream(lexer));
-		lexer.removeErrorListeners();
-		parser.removeErrorListeners();
-
-		parser.addErrorListener(new BaseErrorListener() {
-			@Override public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-				Token token = (Token)offendingSymbol;
-				results.add(new StyledChunk(token.getStartIndex(), token.getText() != null ? token.getText().length() : 1, styleManager.error));
-			}
-		});
-		parser.program();
+		for (ParseError error : compilationResult.errors)
+			results.add(new StyledChunk(error.startOffset, error.endOffset - error.startOffset, styleManager.error));
 	}
 }

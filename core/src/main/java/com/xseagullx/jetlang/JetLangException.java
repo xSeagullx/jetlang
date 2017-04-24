@@ -7,17 +7,14 @@ public class JetLangException extends RuntimeException {
 	private TokenInformationHolder element;
 	private TokenInformationHolder[] stackTrace;
 
-	public JetLangException(String message, TokenInformationHolder element) {
+	public JetLangException(String message, TokenInformationHolder element, TokenInformationHolder[] stackTrace) {
 		super(message);
 		this.element = element;
+		this.stackTrace = stackTrace;
 	}
 
 	public TokenInformationHolder[] getJetLangStackTrace() {
 		return stackTrace;
-	}
-
-	public void setJetLangStackTrace(TokenInformationHolder[] stackTrace) {
-		this.stackTrace = stackTrace;
 	}
 
 	public String getDetailedMessage() {

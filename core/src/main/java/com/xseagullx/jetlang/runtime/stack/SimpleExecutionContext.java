@@ -50,7 +50,15 @@ public class SimpleExecutionContext implements ExecutionContext {
 	}
 
 	@Override public void exec(Statement statement) {
-		statement.exec(this);
+		try {
+			statement.exec(this);
+		}
+		catch (JetLangException e) {
+			throw e;
+		}
+		catch (Throwable e) {
+			throw exception("Fatal runtime exception while executing " + statement + "\n" + e.getMessage(), statement);
+		}
 	}
 
 	@Override public Object exec(Expression expression) {
@@ -58,21 +66,20 @@ public class SimpleExecutionContext implements ExecutionContext {
 			return expression.exec(this);
 		}
 		catch (JetLangException e) {
-			int stackTraceSize = frames.size();
-			TokenInformationHolder[] stackTrace = IntStream.range(0, stackTraceSize)
-				.mapToObj(i -> frames.get(stackTraceSize - 1 - i).caller)
-				.toArray(TokenInformationHolder[]::new);
-			e.setJetLangStackTrace(stackTrace);
-			error(e.getDetailedMessage());
 			throw e;
 		}
 		catch (Throwable e) {
-			error("Fatal runtime exception while executing " + expression + "\n" + e.getMessage());
-			throw e;
+			throw exception("Fatal runtime exception while executing " + expression + "\n" + e.getMessage(), expression);
 		}
 	}
 
-	@Override public Exception exception(String message, TokenInformationHolder astNode) {
-		return null;
+	@Override public JetLangException exception(String message, TokenInformationHolder holder) {
+		int stackTraceSize = frames.size();
+		TokenInformationHolder[] stackTrace = IntStream.range(0, stackTraceSize)
+			.mapToObj(i -> frames.get(stackTraceSize - 1 - i).caller)
+			.toArray(TokenInformationHolder[]::new);
+		JetLangException exception = new JetLangException(message, holder, stackTrace);
+		error(exception.getDetailedMessage());
+		return exception;
 	}
 }
