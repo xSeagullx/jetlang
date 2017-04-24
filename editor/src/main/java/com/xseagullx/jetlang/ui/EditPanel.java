@@ -43,44 +43,19 @@ public class EditPanel {
 
 	public Component createComponent() {
 		JEditorPane editorPane = new JEditorPane();
-		JWindow window = new JWindow();
-		JPanel contentPane = new JPanel();
-		window.setContentPane(contentPane);
-		Label errorLabel = new Label("");
-		contentPane.add(errorLabel);
-		window.setVisible(false);
-		window.pack();
-		window.setAlwaysOnTop(true);
+		BiConsumer<String, Point> errorTip = createErrorTip();
 		editorPane.setCaretColor(styleManager.caretColor);
 		editorPane.setEditorKit(new StyledEditorKit());
 		editorPane.setDocument(document);
 		editorPane.addCaretListener(e -> {
+			int caretOffset = editorPane.getCaretPosition();
+			showErrorTip(editorPane, errorTip, caretOffset);
+
 			if (caretPositionListener == null)
 				return;
 
-			int caretOffset = editorPane.getCaretPosition();
-			try {
-				Point caretLocation = editorPane.modelToView(caretOffset).getLocation();
-				SwingUtilities.convertPointToScreen(caretLocation, editorPane);
-				caretLocation.translate(0, 22);
-				window.setLocation(caretLocation);
-				List<ParseError> errors = errorsAtPos(caretOffset);
-				window.setVisible(!errors.isEmpty());
-				if (!errors.isEmpty()) {
-					String errorTip = errors.stream().map(ParseError::toString).collect(Collectors.joining("\n"));
-					errorLabel.setText(errorTip);
-					window.pack();
-				}
-			}
-			catch (BadLocationException e1) {
-				throw new ThisShouldNeverHappenException(e1);
-			}
-
 			Element line = document.getParagraphElement(caretOffset);
-			int lineNo = -1;
-			for (int i = 0; i < document.getDefaultRootElement().getElementCount(); i++)
-				if (line == document.getDefaultRootElement().getElement(i))
-					lineNo = i;
+			int lineNo = getLineNoOfElement(line);
 			caretPositionListener.accept(lineNo + 1, (caretOffset - line.getStartOffset()) + 1);
 		});
 		JScrollPane jScrollPane = new JScrollPane(editorPane);
@@ -88,8 +63,12 @@ public class EditPanel {
 		return jScrollPane;
 	}
 
-	private List<ParseError> errorsAtPos(int caretPos) {
-		return errors.stream().filter(it -> it.startOffset <= caretPos && it.endOffset >= caretPos).collect(Collectors.toList());
+	private int getLineNoOfElement(Element line) {
+		int lineNo = -1;
+		for (int i = 0; i < document.getDefaultRootElement().getElementCount(); i++)
+			if (line == document.getDefaultRootElement().getElement(i))
+				lineNo = i;
+		return lineNo;
 	}
 
 	public void onChange(Runnable requestHighlight) {
@@ -139,5 +118,50 @@ public class EditPanel {
 
 	public boolean isSnapshotValid(DocumentSnapshot documentSnapshot) {
 		return Objects.equals(documentSnapshot.text, getDocumentSnapshot().text);
+	}
+
+	private BiConsumer<String, Point> createErrorTip() {
+		JWindow window = new JWindow();
+		JPanel contentPanel = new JPanel();
+		window.setContentPane(contentPanel);
+		window.setVisible(false);
+		window.setAlwaysOnTop(true);
+
+		Label errorLabel = new Label();
+		contentPanel.setBackground(styleManager.backgroundColor);
+		errorLabel.setForeground(styleManager.foregroundColor);
+		contentPanel.add(errorLabel);
+		return (message, position) -> {
+			if (message == null || message.isEmpty())
+				window.setVisible(false);
+			else {
+				window.setVisible(true);
+				window.setLocation(position);
+				errorLabel.setText(message);
+				window.pack();
+			}
+		};
+	}
+
+	private void showErrorTip(JEditorPane editorPane, BiConsumer<String, Point> errorTip, int caretOffset) {
+		String errorMessage = errorsAtPos(caretOffset).stream().map(ParseError::toString).collect(Collectors.joining("\n"));
+		if (errorMessage.isEmpty())
+			errorTip.accept(null, null);
+		else {
+			Point caretLocation;
+			try {
+				caretLocation = editorPane.modelToView(caretOffset).getLocation();
+			}
+			catch (BadLocationException e) {
+				throw new ThisShouldNeverHappenException(e);
+			}
+			SwingUtilities.convertPointToScreen(caretLocation, editorPane);
+			caretLocation.translate(0, 22);
+			errorTip.accept(errorMessage, caretLocation);
+		}
+	}
+
+	private List<ParseError> errorsAtPos(int caretPos) {
+		return errors.stream().filter(it -> it.startOffset <= caretPos && it.endOffset >= caretPos).collect(Collectors.toList());
 	}
 }

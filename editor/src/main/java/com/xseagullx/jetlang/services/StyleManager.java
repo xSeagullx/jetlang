@@ -24,6 +24,8 @@ public class StyleManager {
 	public final MutableAttributeSet string;
 	public final MutableAttributeSet error;
 	public final Color caretColor;
+	public final Color backgroundColor;
+	public final Color foregroundColor;
 
 	public StyleManager() {
 		Font font;
@@ -35,13 +37,16 @@ public class StyleManager {
 			throw new FatalException("Can't find any suitable font", e);
 		}
 
+		backgroundColor = Color.decode("#2B2B2B");
+		foregroundColor = Color.decode("#A9B7C6");
+
 		UIDefaults defs = UIManager.getDefaults();
-		defs.put("EditorPane.background", new ColorUIResource(Color.decode("#2B2B2B")));
-		defs.put("EditorPane.inactiveBackground", new ColorUIResource(Color.decode("#2B2B2B")));
+		defs.put("EditorPane.background", new ColorUIResource(backgroundColor));
+		defs.put("EditorPane.inactiveBackground", new ColorUIResource(backgroundColor));
 
 		main = new SimpleAttributeSet();
 		StyleConstants.setFontFamily(main, font.getFamily());
-		StyleConstants.setForeground(main, Color.decode("#A9B7C6"));
+		StyleConstants.setForeground(main, foregroundColor);
 		StyleConstants.setFontSize(main, 14);
 
 		keyword = new SimpleAttributeSet(main);
