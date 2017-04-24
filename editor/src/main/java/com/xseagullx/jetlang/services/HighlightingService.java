@@ -10,6 +10,7 @@ import javax.swing.text.AttributeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class HighlightingService {
 	private final StyleManager styleManager;
@@ -26,7 +27,7 @@ public class HighlightingService {
 		this.styleManager = styleManager;
 	}
 
-	Collection<StyledChunk> highlight(DocumentSnapshot documentSnapshot) {
+	HighlightTask.HighlightingResults highlight(DocumentSnapshot documentSnapshot) {
 		Collection<StyledChunk> results = new ArrayList<>();
 
 		JetLangLexer lexer = Compiler.getJetLangLexer(documentSnapshot.text, null);
@@ -45,18 +46,19 @@ public class HighlightingService {
 			results.add(new StyledChunk(it.getStartIndex(), it.getText().length(), style));
 		}
 
-		highlightErrors(documentSnapshot, results);
+		List<ParseError> parseErrors = highlightErrors(documentSnapshot, results);
 
-		return results;
+		return new HighlightTask.HighlightingResults(parseErrors, results);
 	}
 
-	private void highlightErrors(DocumentSnapshot documentSnapshot, Collection<StyledChunk> results) {
+	private List<ParseError> highlightErrors(DocumentSnapshot documentSnapshot, Collection<StyledChunk> results) {
 		CompilationResult compilationResult = Compiler.getErrors(documentSnapshot.text);
 		if (!compilationResult.hasErrors())
-			return;
+			return null;
 
 		for (ParseError error : compilationResult.errors)
 			results.add(new StyledChunk(error.startOffset, error.endOffset - error.startOffset, styleManager.error));
+		return compilationResult.errors;
 	}
 }
 

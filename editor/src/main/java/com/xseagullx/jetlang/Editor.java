@@ -6,7 +6,6 @@ import com.xseagullx.jetlang.services.HighlightingService;
 import com.xseagullx.jetlang.services.Keymap;
 import com.xseagullx.jetlang.services.RunService;
 import com.xseagullx.jetlang.services.StyleManager;
-import com.xseagullx.jetlang.services.StyledChunk;
 import com.xseagullx.jetlang.services.TaskManager;
 import com.xseagullx.jetlang.ui.EditPanel;
 import com.xseagullx.jetlang.ui.FileManagingComponent;
@@ -23,8 +22,6 @@ import java.awt.Container;
 import java.awt.FontFormatException;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.logging.Logger;
 
 /** High level component managing editor interactions. */
@@ -107,8 +104,7 @@ class Editor {
 
 				SwingUtilities.invokeLater(() -> {
 					log.info("Applying highlighting results.");
-					Collection<StyledChunk> highlighterResults = it.getFuture().getNow(Collections.emptyList());
-					editPanel.applyHighlighting(highlighterResults);
+					it.getFuture().thenAccept(editPanel::applyHighlighting);
 				});
 			}
 		);

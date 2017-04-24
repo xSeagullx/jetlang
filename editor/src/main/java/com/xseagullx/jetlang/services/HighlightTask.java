@@ -1,8 +1,20 @@
 package com.xseagullx.jetlang.services;
 
+import com.xseagullx.jetlang.ParseError;
+
 import java.util.Collection;
 
-public class HighlightTask extends Task<Collection<StyledChunk>> {
+public class HighlightTask extends Task<HighlightTask.HighlightingResults> {
+	public static class HighlightingResults {
+		public final Collection<StyledChunk> styledChunks;
+		public final Collection<ParseError> parseErrors;
+
+		HighlightingResults(Collection<ParseError> parseErrors, Collection<StyledChunk> styledChunks) {
+			this.parseErrors = parseErrors;
+			this.styledChunks = styledChunks;
+		}
+	}
+
 	private final DocumentSnapshot documentSnapshot;
 	private final HighlightingService highlightingService;
 
@@ -11,7 +23,7 @@ public class HighlightTask extends Task<Collection<StyledChunk>> {
 		this.documentSnapshot = documentSnapshot;
 	}
 
-	@Override public Collection<StyledChunk> call() {
+	@Override public HighlightingResults call() {
 		return highlightingService.highlight(documentSnapshot);
 	}
 
