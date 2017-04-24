@@ -7,11 +7,13 @@ import com.xseagullx.jetlang.services.StyleManager;
 import com.xseagullx.jetlang.services.StyledChunk;
 import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 
+import javax.swing.BorderFactory;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
@@ -36,6 +38,7 @@ public class EditPanel {
 	private final StyledDocument document;
 	private BiConsumer<Integer, Integer> caretPositionListener;
 	private Collection<ParseError> errors;
+	private CaretListener caretListener;
 
 	public EditPanel(StyleManager styleManager) {
 		this.styleManager = styleManager;
@@ -48,7 +51,7 @@ public class EditPanel {
 		editorPane.setCaretColor(styleManager.caretColor);
 		editorPane.setEditorKit(new StyledEditorKit());
 		editorPane.setDocument(document);
-		editorPane.addCaretListener(e -> {
+		caretListener = ignored -> {
 			int caretOffset = editorPane.getCaretPosition();
 			showErrorTip(editorPane, errorTip, caretOffset);
 
@@ -58,7 +61,8 @@ public class EditPanel {
 			Element line = document.getParagraphElement(caretOffset);
 			int lineNo = getLineNoOfElement(line);
 			caretPositionListener.accept(lineNo + 1, (caretOffset - line.getStartOffset()) + 1);
-		});
+		};
+		editorPane.addCaretListener(caretListener);
 		JScrollPane jScrollPane = new JScrollPane(editorPane);
 		jScrollPane.setPreferredSize(new Dimension(1024, 768));
 		return jScrollPane;
@@ -89,7 +93,7 @@ public class EditPanel {
 
 	public void setText(String text) {
 		try {
-			errors = null;
+			setErrors(null);
 			document.remove(0, document.getLength());
 			document.insertString(0, text, null);
 		}
@@ -101,7 +105,7 @@ public class EditPanel {
 	public void applyHighlighting(HighlightTask.HighlightingResults highlightingResults) {
 		for (StyledChunk it : highlightingResults.styledChunks)
 			document.setCharacterAttributes(it.offset, it.length, it.attributeSet, true);
-		errors = highlightingResults.parseErrors;
+		setErrors(highlightingResults.parseErrors);
 	}
 
 	/** Returns immutable copy of a document. */
@@ -122,9 +126,15 @@ public class EditPanel {
 		return Objects.equals(documentSnapshot.text, getDocumentSnapshot().text);
 	}
 
+	private void setErrors(Collection<ParseError> errors) {
+		this.errors = errors;
+		caretListener.caretUpdate(null);
+	}
+
 	private BiConsumer<String, Point> createErrorTip() {
 		JWindow window = new JWindow();
 		JPanel contentPanel = new JPanel();
+		contentPanel.setBorder(BorderFactory.createLineBorder(styleManager.foregroundColor));
 		window.setContentPane(contentPanel);
 		window.setVisible(false);
 		window.setAlwaysOnTop(true);
@@ -158,7 +168,7 @@ public class EditPanel {
 				throw new ThisShouldNeverHappenException(e);
 			}
 			SwingUtilities.convertPointToScreen(caretLocation, editorPane);
-			caretLocation.translate(0, 22);
+			caretLocation.translate(4, 24);
 			errorTip.accept(errorMessage, caretLocation);
 		}
 	}
