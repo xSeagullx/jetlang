@@ -37,6 +37,7 @@ class Editor {
 	private final RunService runService = new RunService(taskManager);
 	private HighlightingService highlightingService = new HighlightingService(styleManager);
 	private EditorState editorState = new EditorState();
+	private EditorExecutionContext context;
 
 	private final OutPanel outputPanel;
 	private final EditPanel editPanel;
@@ -55,11 +56,18 @@ class Editor {
 		JFrame frame = createFrame();
 		Keymap.register(actionManager);
 		FileManagingComponent fileComponent = new FileManagingComponent(this::open, editorState);
-		editorState.subscribe(() ->
-			frame.setTitle(editorState.getFile() != null ? "File: " + editorState.getFile().getAbsolutePath() : "New file")
+		editorState.subscribe(() -> {
+			File file = editorState.getFile();
+			String title = file != null ? "File: " + file.getAbsolutePath() : "New file";
+			if (editorState.isSlowMode())
+				title += " : slooooow mode ON";
+			frame.setTitle(title);
+			}
 		);
 
 		actionManager.register(ActionManager.Action.RUN, (action) -> runProgram());
+		actionManager.register(ActionManager.Action.TOGGLE_SLOW_MO, (action) -> editorState.setSlowMode(!editorState.isSlowMode()));
+		actionManager.register(ActionManager.Action.STOP, (action) -> stopProgram());
 		actionManager.register(ActionManager.Action.QUIT, (action) -> frame.dispose());
 		actionManager.register(ActionManager.Action.OPEN, (action) -> fileComponent.openFileDialog(frame));
 		actionManager.register(ActionManager.Action.SAVE, (action) -> fileComponent.saveFile(frame, editPanel.getDocumentSnapshot().text));
@@ -114,8 +122,13 @@ class Editor {
 	}
 
 	private void runProgram() {
-		EditorExecutionContext context = new EditorExecutionContext(outputPanel, styleManager);
+		context = new EditorExecutionContext(outputPanel, styleManager, editorState.isSlowMode());
 		outputPanel.clear();
 		runService.execute(editPanel.getDocumentSnapshot(), context);
+	}
+
+	private void stopProgram() {
+		if (context != null)
+			context.cancel();
 	}
 }

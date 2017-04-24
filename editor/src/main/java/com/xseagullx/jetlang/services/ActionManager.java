@@ -10,6 +10,8 @@ public class ActionManager {
 		SAVE,
 		OPEN,
 		QUIT,
+		TOGGLE_SLOW_MO,
+		STOP,
 		RUN
 	}
 

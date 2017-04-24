@@ -10,6 +10,7 @@ public class EditorState {
 	private File file;
 
 	private final List<Runnable> subscriptions = new ArrayList<>();
+	private boolean slowMode;
 
 	public void subscribe(Runnable r) {
 		subscriptions.add(r);
@@ -43,6 +44,15 @@ public class EditorState {
 
 	public void setFile(File file) {
 		this.file = file;
+		notifySubscriptions();
+	}
+
+	public boolean isSlowMode() {
+		return slowMode;
+	}
+
+	public void setSlowMode(boolean slowMode) {
+		this.slowMode = slowMode;
 		notifySubscriptions();
 	}
 }

@@ -12,6 +12,8 @@ public class Keymap {
 		keymap.put("⌘+S", ActionManager.Action.SAVE);
 		keymap.put("⌘+Q", ActionManager.Action.QUIT);
 		keymap.put("⌘+W", ActionManager.Action.CLOSE);
+		keymap.put("⌘+T", ActionManager.Action.TOGGLE_SLOW_MO);
+		keymap.put("⎋", ActionManager.Action.STOP);
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
 			if (e.getID() == KeyEvent.KEY_RELEASED) {

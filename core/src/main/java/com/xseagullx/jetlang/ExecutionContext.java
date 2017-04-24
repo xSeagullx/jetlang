@@ -25,4 +25,8 @@ public interface ExecutionContext {
 	Object exec(Expression expression);
 
 	JetLangException exception(String message, TokenInformationHolder holder);
+
+	default void cancel() {
+		throw new UnsupportedOperationException();
+	}
 }
