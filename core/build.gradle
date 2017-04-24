@@ -1,12 +1,9 @@
 apply plugin: 'antlr'
-apply plugin: 'groovy'
 apply plugin: 'application'
 
 dependencies {
 	antlr 'org.antlr:antlr4:4.7'
 	compile 'org.antlr:antlr4-runtime:4.7'
-	testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-	testCompile 'cglib:cglib-nodep:3.2.5'
 }
 
 sourceSets { main { java { srcDir "$buildDir/generated-src/main/java" } } }

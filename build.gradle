@@ -9,6 +9,7 @@ allprojects {
 	group 'com.xseagullx.jetlang'
 
 	apply plugin: 'java'
+	apply plugin: 'groovy'
 	sourceCompatibility = 1.8
 
 	repositories {
@@ -17,5 +18,9 @@ allprojects {
 
 	dependencies {
 		testCompile 'junit:junit:4.12'
+		testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+		testCompile 'cglib:cglib-nodep:3.2.5'
 	}
+
+	[compileJava, compileTestJava, compileGroovy, compileTestGroovy]*.options*.encoding = 'UTF-8'
 }

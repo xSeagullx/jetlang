@@ -19,6 +19,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Element;
+import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 import java.awt.Component;
@@ -103,6 +104,7 @@ public class EditPanel {
 	}
 
 	public void applyHighlighting(HighlightTask.HighlightingResults highlightingResults) {
+		document.setCharacterAttributes(0, document.getLength(), new SimpleAttributeSet(), true);
 		for (StyledChunk it : highlightingResults.styledChunks)
 			document.setCharacterAttributes(it.offset, it.length, it.attributeSet, true);
 		setErrors(highlightingResults.parseErrors);
