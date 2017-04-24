@@ -13,15 +13,22 @@ import javax.swing.text.StyledEditorKit;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 class DocumentSnapshot {
+	private static int i = 0;
 	final String text;
 	private final int lineOffsets[];
+	private int id = i++;
 
 	DocumentSnapshot(String text, int[] lineOffsets) {
 		this.text = text;
 		this.lineOffsets = lineOffsets;
+	}
+
+	int getId() {
+		return id;
 	}
 }
 
@@ -108,5 +115,9 @@ class EditPanel {
 
 	void setCaretPositionListener(BiConsumer<Integer, Integer> caretPositionListener) {
 		this.caretPositionListener = caretPositionListener;
+	}
+
+	boolean isSnapshotValid(DocumentSnapshot documentSnapshot) {
+		return Objects.equals(documentSnapshot.text, getDocumentSnapshot().text);
 	}
 }

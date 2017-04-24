@@ -5,26 +5,22 @@ import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-interface Task extends Runnable {
-}
+abstract class Task<T> implements Callable<T> {
+	abstract String getId();
 
-class HighlightTask implements Task {
-	int startOffset;
-	int endOffset;
-	String text;
-
-	@Override public void run() {
-
+	@Override public String toString() {
+		return getClass() + " (" + getId() + ")";
 	}
 }
 
-class RunTask implements Task {
+class RunTask extends Task<Void> {
 	private DocumentSnapshot documentSnapshot;
 	private ExecutionContext context;
 
@@ -33,7 +29,7 @@ class RunTask implements Task {
 		this.context = context;
 	}
 
-	@Override public void run() {
+	@Override public Void call() {
 		try {
 			context.print("Building...");
 			CompilationResult compilationResult = new StackMachineCompiler().parse(documentSnapshot.text);
@@ -50,10 +46,15 @@ class RunTask implements Task {
 		catch (Throwable e) {
 			context.print("Execution failed.");
 		}
+		return null;
+	}
+
+	@Override public String getId() {
+		return "runTask";
 	}
 }
 
-class TaskExecution {
+class TaskExecution<T> {
 	enum Status {
 		SCHEDULED,
 		RUNNING,
@@ -62,24 +63,35 @@ class TaskExecution {
 		CANCELLED,
 	}
 
-	private final Task task;
+	private final Task<T> task;
 	public Status status;
-	private CompletableFuture<Void> future;
+	private CompletableFuture<T> future;
 
-	TaskExecution(Task task) {
+	TaskExecution(Task<T> task) {
 		this.task = task;
 	}
 
-	CompletableFuture<Void> start() {
-		future = CompletableFuture.runAsync(task);
-		return future;
+	TaskExecution<T> start() {
+		future = CompletableFuture.supplyAsync(() -> {
+			try {
+				return task.call();
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+		return this;
 	}
 
 	/** Return an info-only copy of this object */
 	TaskExecution copy() {
-		TaskExecution taskExecution = new TaskExecution(task);
+		TaskExecution taskExecution = new TaskExecution<>(task);
 		taskExecution.status = status;
 		return taskExecution;
+	}
+
+	CompletableFuture<T> getFuture() {
+		return future;
 	}
 
 	String getName() {
@@ -98,31 +110,32 @@ class AlreadyRunningException extends RuntimeException {
 public class TaskManager {
 	private static final Logger log = Logger.getLogger(TaskManager.class.getName());
 
-	private final ConcurrentHashMap<Class, TaskExecution> tasks = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, TaskExecution> tasks = new ConcurrentHashMap<>();
 	private final List<Consumer<TaskExecution>> listeners = new ArrayList<>();
 
 	/**
 	 * Runs the task. ATM only one instance of same kind task can be executed simultaneously.
 	 * If task of this type is already running, @{@link AlreadyRunningException} will be thrown.
 	 */
-	void run(Task task) {
-		Class<? extends Task> taskClass = task.getClass();
-		TaskExecution taskExecution = new TaskExecution(task);
+	public <T> CompletableFuture<TaskExecution<T>> run(Task<T> task) {
+		TaskExecution<T> taskExecution = new TaskExecution<>(task);
 		synchronized (tasks) {
-			if (tasks.containsKey(taskClass))
+			if (tasks.containsKey(task.getId()))
 				throw new AlreadyRunningException(task);
-			tasks.put(taskClass, taskExecution);
+			tasks.put(task.getId(), taskExecution);
 			taskExecution.status = TaskExecution.Status.SCHEDULED;
 			notifyListeners(taskExecution);
 			log.info("Scheduling task: " + task);
 		}
-		taskExecution.start().handle((ignored, error) -> {
-			log.info("Removing task: " + task);
-			boolean removed = tasks.remove(taskClass, taskExecution);
-			taskExecution.status = error != null ? TaskExecution.Status.FAILED : TaskExecution.Status.SUCCEEDED;
-			notifyListeners(taskExecution);
-			log.info("Removing task: " + task + " " + (removed ? "Success" : "Failure"));
-			return null;
+		return taskExecution.start().getFuture().handle((ignored, error) -> {
+				log.info("Removing task: " + task);
+				boolean removed = tasks.remove(task.getId(), taskExecution);
+				taskExecution.status = error != null ? TaskExecution.Status.FAILED : TaskExecution.Status.SUCCEEDED;
+				if (error != null)
+					error.printStackTrace();
+				notifyListeners(taskExecution);
+				log.info("Removing task: " + task + " " + (removed ? "Success" : "Failure"));
+				return taskExecution;
 			}
 		);
 	}

@@ -9,11 +9,14 @@ import spock.util.concurrent.PollingConditions
 import java.util.function.Consumer
 
 @Log
-class SleepTask implements Task {
-	@Override void run() {
+class SleepTask extends Task<Void> {
+	String id = "sleepTask"
+
+	@Override Void call() {
 		log.info("Sleeping... $this")
 		sleep(100)
 		log.info("Done. $this")
+		null
 	}
 }
 
@@ -25,6 +28,7 @@ class TaskManagerSpec extends Specification {
 		setup:
 		def conditions = new AsyncConditions()
 		def task = Mock(Task)
+		task.getId() >> "mockTask"
 		def currentThread = Thread.currentThread()
 
 		when:
@@ -32,14 +36,14 @@ class TaskManagerSpec extends Specification {
 		conditions.await(1)
 
 		then:
-			1 * task.run() >> {
+			1 * task.call() >> {
 				conditions.evaluate {
 					assert currentThread != Thread.currentThread()
 				}
 			}
 	}
 
-	def "Cant' run 2 tasks of the same type"() {
+	def "AlreadyRunningException strategy"() {
 		setup:
 		def task1 = new SleepTask()
 		def task2 = new SleepTask()
@@ -52,6 +56,20 @@ class TaskManagerSpec extends Specification {
 		def e = thrown AlreadyRunningException
 		e.task == task2
 		taskManager.runningTasks().task == [task1]
+	}
+
+	def "no duplicate prevention strategy"() {
+		setup:
+		def task1 = new SleepTask(id: "sleepTask:1")
+		def task2 = new SleepTask(id: "sleepTask:2")
+
+		when:
+		taskManager.run(task1)
+		taskManager.run(task2)
+
+		then:
+		noExceptionThrown()
+		taskManager.runningTasks().task.toSet() == [task1, task2].toSet()
 	}
 
 	def "task is removed when finished"() {

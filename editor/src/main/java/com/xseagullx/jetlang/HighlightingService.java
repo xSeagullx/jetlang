@@ -1,5 +1,7 @@
 package com.xseagullx.jetlang;
 
+import org.antlr.v4.runtime.Token;
+
 import javax.swing.text.AttributeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +9,7 @@ import java.util.Collection;
 
 class HighlightingService {
 	private final StyleManager styleManager;
+
 	private Collection<Integer> KEYWORDS = Arrays.asList( // hashSet has more overhead. O(N) here is nothing.
 		JetLangLexer.KW_VAR,
 		JetLangLexer.KW_MAP,
@@ -14,7 +17,6 @@ class HighlightingService {
 		JetLangLexer.KW_OUT,
 		JetLangLexer.KW_PRINT
 	);
-
 
 	HighlightingService(StyleManager styleManager) {
 		this.styleManager = styleManager;
@@ -25,7 +27,7 @@ class HighlightingService {
 
 		JetLangLexer lexer = Compiler.getJetLangLexer(documentSnapshot.text, null);
 
-		lexer.getAllTokens().forEach((it) -> {
+		for (Token it : lexer.getAllTokens()) {
 			AttributeSet style;
 			if (KEYWORDS.contains(it.getType()))
 				style = styleManager.keyword;
@@ -37,7 +39,7 @@ class HighlightingService {
 				style = styleManager.main;
 
 			results.add(new StyledChunk(it.getStartIndex(), it.getText().length(), style));
-		});
+		}
 
 		highlightErrors(documentSnapshot, results);
 
@@ -51,5 +53,27 @@ class HighlightingService {
 
 		for (ParseError error : compilationResult.errors)
 			results.add(new StyledChunk(error.startOffset, error.endOffset - error.startOffset, styleManager.error));
+	}
+}
+
+class HighlightTask extends Task<Collection<StyledChunk>> {
+	private final DocumentSnapshot documentSnapshot;
+	private final HighlightingService highlightingService;
+
+	HighlightTask(DocumentSnapshot documentSnapshot, HighlightingService highlightingService) {
+		this.highlightingService = highlightingService;
+		this.documentSnapshot = documentSnapshot;
+	}
+
+	@Override public Collection<StyledChunk> call() {
+		return highlightingService.highlight(documentSnapshot);
+	}
+
+	DocumentSnapshot getDocumentSnapshot() {
+		return documentSnapshot;
+	}
+
+	@Override public String getId() {
+		return "highlightTask:" + documentSnapshot.getId();
 	}
 }

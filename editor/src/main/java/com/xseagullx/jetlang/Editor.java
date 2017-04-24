@@ -21,12 +21,15 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /** High level component managing editor interactions */
 class Editor {
-	// TODO Добавить окно ошибок компиляции
+	private static final Logger log = Logger.getLogger(Editor.class.getName());
+
 	// TODO CTrl шорткаты для Windows. Парсинг конфига из JSON
 	// TODO create distribution for editor and compiler
 
@@ -158,8 +161,20 @@ class Editor {
 	}
 
 	private void highlight() {
-		Collection<StyledChunk> highlighterResults = highlightingService.highlight(editPanel.getDocumentSnapshot());
-		editPanel.applyHighlighting(highlighterResults);
+		HighlightTask highlightTask = new HighlightTask(editPanel.getDocumentSnapshot(), highlightingService);
+		taskManager.run(highlightTask).thenAccept(it -> {
+				if (!editPanel.isSnapshotValid(highlightTask.getDocumentSnapshot())) {
+					log.info("Highlighting results are discarded");
+					return;
+				}
+
+				SwingUtilities.invokeLater(() -> {
+					log.info("Applying highlighting results.");
+					Collection<StyledChunk> highlighterResults = it.getFuture().getNow(Collections.emptyList());
+					editPanel.applyHighlighting(highlighterResults);
+				});
+			}
+		);
 	}
 
 	private void runProgram() {
