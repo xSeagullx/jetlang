@@ -1,4 +1,9 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.ui;
+
+import com.xseagullx.jetlang.services.DocumentSnapshot;
+import com.xseagullx.jetlang.services.StyleManager;
+import com.xseagullx.jetlang.services.StyledChunk;
+import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
@@ -16,33 +21,18 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-class DocumentSnapshot {
-	private static int i = 0;
-	final String text;
-	private final int lineOffsets[];
-	private int id = i++;
-
-	DocumentSnapshot(String text, int[] lineOffsets) {
-		this.text = text;
-		this.lineOffsets = lineOffsets;
-	}
-
-	int getId() {
-		return id;
-	}
-}
-
-class EditPanel {
+/** UI component responsible for showing code and applying highlighting results */
+public class EditPanel {
 	private final StyleManager styleManager;
 	private final StyledDocument document;
 	private BiConsumer<Integer, Integer> caretPositionListener;
 
-	EditPanel(StyleManager styleManager) {
+	public EditPanel(StyleManager styleManager) {
 		this.styleManager = styleManager;
 		document = new DefaultStyledDocument();
 	}
 
-	Component createComponent() {
+	public Component createComponent() {
 		JEditorPane editorPane = new JEditorPane();
 		editorPane.setCaretColor(styleManager.caretColor);
 		editorPane.setEditorKit(new StyledEditorKit());
@@ -64,7 +54,7 @@ class EditPanel {
 		return jScrollPane;
 	}
 
-	void onChange(Runnable highlight) {
+	public void onChange(Runnable highlight) {
 		document.addDocumentListener(new DocumentListener() {
 			@Override public void insertUpdate(DocumentEvent e) {
 				SwingUtilities.invokeLater(highlight);
@@ -79,7 +69,7 @@ class EditPanel {
 		});
 	}
 
-	void setText(String text) {
+	public void setText(String text) {
 		try {
 			document.remove(0, document.getLength());
 			document.insertString(0, text, null);
@@ -89,35 +79,26 @@ class EditPanel {
 		}
 	}
 
-	void applyHighlighting(Collection<StyledChunk> styledChunks) {
+	public void applyHighlighting(Collection<StyledChunk> styledChunks) {
 		for (StyledChunk it : styledChunks)
 			document.setCharacterAttributes(it.offset, it.length, it.attributeSet, true);
 	}
 
 	/** Returns immutable copy of a document. */
-	DocumentSnapshot getDocumentSnapshot() {
-		String text;
+	public DocumentSnapshot getDocumentSnapshot() {
 		try {
-			text = document.getText(0, document.getLength());
+			return new DocumentSnapshot(document.getText(0, document.getLength()));
 		}
 		catch (BadLocationException e) {
 			throw new ThisShouldNeverHappenException(e);
 		}
-
-		Element defaultRootElement = document.getDefaultRootElement();
-		int lineCount = defaultRootElement.getElementCount();
-		int[] lineStartPositions = new int[lineCount];
-		for (int i = 0; i < lineCount; i++)
-			lineStartPositions[i] = defaultRootElement.getElement(i).getStartOffset();
-
-		return new DocumentSnapshot(text, lineStartPositions);
 	}
 
-	void setCaretPositionListener(BiConsumer<Integer, Integer> caretPositionListener) {
+	public void setCaretPositionListener(BiConsumer<Integer, Integer> caretPositionListener) {
 		this.caretPositionListener = caretPositionListener;
 	}
 
-	boolean isSnapshotValid(DocumentSnapshot documentSnapshot) {
+	public boolean isSnapshotValid(DocumentSnapshot documentSnapshot) {
 		return Objects.equals(documentSnapshot.text, getDocumentSnapshot().text);
 	}
 }

@@ -1,5 +1,6 @@
 apply plugin: 'antlr'
 apply plugin: 'groovy'
+apply plugin: 'application'
 
 dependencies {
 	antlr 'org.antlr:antlr4:4.7'
@@ -15,3 +16,5 @@ sourceSets { main { java { srcDir "$buildDir/generated-src/main/java" } } }
 generateGrammarSource {
 	outputDirectory = file("$buildDir/generated-src/main/java/com/xseagullx/jetlang")
 }
+
+mainClassName = 'com.xseagullx.jetlang.Interpreter'

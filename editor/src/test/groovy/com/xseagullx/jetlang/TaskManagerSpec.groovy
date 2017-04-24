@@ -1,6 +1,10 @@
 package com.xseagullx.jetlang
 
-import com.xseagullx.jetlang.TaskExecution.Status
+import com.xseagullx.jetlang.services.AlreadyRunningException
+import com.xseagullx.jetlang.services.Task
+import com.xseagullx.jetlang.services.TaskExecution
+import com.xseagullx.jetlang.services.TaskExecution.Status
+import com.xseagullx.jetlang.services.TaskManager
 import groovy.util.logging.Log
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
@@ -21,8 +25,7 @@ class SleepTask extends Task<Void> {
 }
 
 class TaskManagerSpec extends Specification {
-
-	TaskManager taskManager = new TaskManager();
+	TaskManager taskManager = new TaskManager()
 
 	def "task is executed in different thread"() {
 		setup:
@@ -36,11 +39,12 @@ class TaskManagerSpec extends Specification {
 		conditions.await(1)
 
 		then:
-			1 * task.call() >> {
-				conditions.evaluate {
-					assert currentThread != Thread.currentThread()
-				}
+		//noinspection GroovyAssignabilityCheck
+		1 * task.call() >> {
+			conditions.evaluate {
+				assert currentThread != Thread.currentThread()
 			}
+		}
 	}
 
 	def "AlreadyRunningException strategy"() {

@@ -1,5 +1,9 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.services;
 
+import com.xseagullx.jetlang.CompilationResult;
+import com.xseagullx.jetlang.Compiler;
+import com.xseagullx.jetlang.JetLangLexer;
+import com.xseagullx.jetlang.ParseError;
 import org.antlr.v4.runtime.Token;
 
 import javax.swing.text.AttributeSet;
@@ -7,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-class HighlightingService {
+public class HighlightingService {
 	private final StyleManager styleManager;
 
 	private Collection<Integer> KEYWORDS = Arrays.asList( // hashSet has more overhead. O(N) here is nothing.
@@ -18,7 +22,7 @@ class HighlightingService {
 		JetLangLexer.KW_PRINT
 	);
 
-	HighlightingService(StyleManager styleManager) {
+	public HighlightingService(StyleManager styleManager) {
 		this.styleManager = styleManager;
 	}
 
@@ -56,24 +60,3 @@ class HighlightingService {
 	}
 }
 
-class HighlightTask extends Task<Collection<StyledChunk>> {
-	private final DocumentSnapshot documentSnapshot;
-	private final HighlightingService highlightingService;
-
-	HighlightTask(DocumentSnapshot documentSnapshot, HighlightingService highlightingService) {
-		this.highlightingService = highlightingService;
-		this.documentSnapshot = documentSnapshot;
-	}
-
-	@Override public Collection<StyledChunk> call() {
-		return highlightingService.highlight(documentSnapshot);
-	}
-
-	DocumentSnapshot getDocumentSnapshot() {
-		return documentSnapshot;
-	}
-
-	@Override public String getId() {
-		return "highlightTask:" + documentSnapshot.getId();
-	}
-}

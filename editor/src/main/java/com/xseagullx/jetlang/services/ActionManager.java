@@ -1,12 +1,12 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.services;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-class ActionManager {
-	enum Action {
-		NEW,
+public class ActionManager {
+	public enum Action {
+		CLOSE,
 		SAVE,
 		OPEN,
 		QUIT,
@@ -15,12 +15,12 @@ class ActionManager {
 
 	private final Map<Action, Consumer<Action>> actionMap = new HashMap<>();
 
-	void fire(Action action) {
+	public void fire(Action action) {
 		Consumer<Action> actionConsumer = actionMap.get(action);
 		actionConsumer.accept(action);
 	}
 
-	void register(Action action, Consumer<Action> callback) {
+	public void register(Action action, Consumer<Action> callback) {
 		actionMap.put(action, callback);
 	}
 }

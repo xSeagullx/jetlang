@@ -1,8 +1,7 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.util;
 
 /** Shall lead to an inevitable and cruel death of our application */
-@SuppressWarnings("unused")
-class FatalException extends RuntimeException {
+@SuppressWarnings("unused") public class FatalException extends RuntimeException {
 	FatalException() {
 	}
 
@@ -10,7 +9,7 @@ class FatalException extends RuntimeException {
 		super(message);
 	}
 
-	FatalException(String message, Throwable cause) {
+	public FatalException(String message, Throwable cause) {
 		super(message, cause);
 	}
 

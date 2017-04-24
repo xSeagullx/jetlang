@@ -1,11 +1,11 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.services;
 
 import javax.swing.text.AttributeSet;
 
-class StyledChunk {
-	int offset;
-	int length;
-	AttributeSet attributeSet;
+public class StyledChunk {
+	public int offset;
+	public int length;
+	public AttributeSet attributeSet;
 
 	StyledChunk(int offset, int length, AttributeSet error) {
 		this.offset = offset;

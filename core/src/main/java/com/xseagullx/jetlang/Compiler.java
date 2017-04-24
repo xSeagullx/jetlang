@@ -1,5 +1,6 @@
 package com.xseagullx.jetlang;
 
+import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -15,16 +16,17 @@ import java.util.List;
 public abstract class Compiler {
 	public CompilationResult parse(String text) {
 		List<ParseError> errors = new ArrayList<>();
-		JetLangParser.ProgramContext program = getJetLangParser(getJetLangLexer(text, errors), errors).program();
-		if (errors.isEmpty())
-			return new CompilationResult(doParse(program));
+		JetLangParser.ProgramContext programCtx = getJetLangParser(getJetLangLexer(text, errors), errors).program();
+		if (errors.isEmpty()) {
+			return new CompilationResult(doParse(programCtx));
+		}
 		else
 			return new CompilationResult(errors);
 	}
 
 	protected abstract Program doParse(JetLangParser.ProgramContext programm);
 
-	static JetLangLexer getJetLangLexer(String text, List<ParseError> errors) {
+	public static JetLangLexer getJetLangLexer(String text, List<ParseError> errors) {
 		JetLangLexer lexer;
 		try {
 			// CharStreams.fromString is bugged: https://github.com/antlr/antlr4/issues/1834
@@ -61,7 +63,7 @@ public abstract class Compiler {
 		return parser;
 	}
 
-	static CompilationResult getErrors(String text) {
+	public static CompilationResult getErrors(String text) {
 		List<ParseError> errors = new ArrayList<>();
 		getJetLangParser(getJetLangLexer(text, errors), errors).program();
 		return new CompilationResult(errors);

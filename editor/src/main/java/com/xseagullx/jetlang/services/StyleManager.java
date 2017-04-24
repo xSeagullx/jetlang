@@ -1,4 +1,6 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.services;
+
+import com.xseagullx.jetlang.util.FatalException;
 
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
@@ -14,15 +16,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-class StyleManager {
-	final MutableAttributeSet main;
-	final MutableAttributeSet keyword;
-	final MutableAttributeSet number;
-	final MutableAttributeSet string;
-	final MutableAttributeSet error;
-	final Color caretColor;
+@SuppressWarnings("WeakerAccess")
+public class StyleManager {
+	public final MutableAttributeSet main;
+	public final MutableAttributeSet keyword;
+	public final MutableAttributeSet number;
+	public final MutableAttributeSet string;
+	public final MutableAttributeSet error;
+	public final Color caretColor;
 
-	StyleManager() {
+	public StyleManager() {
 		Font font;
 		try {
 			InputStream fontStream = new FileInputStream(new File("/Users/seagull/Dev/home/jetlang/editor/src/main/resources/fonts/Inconsolata-LGC.ttf"));

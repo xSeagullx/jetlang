@@ -1,16 +1,17 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.services;
 
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 
-class Keymap {
-	static void register(ActionManager actionManager) {
+public class Keymap {
+	public static void register(ActionManager actionManager) {
 		HashMap<String, ActionManager.Action> keymap = new HashMap<>();
 		keymap.put("⌘+⏎", ActionManager.Action.RUN);
 		keymap.put("⌘+O", ActionManager.Action.OPEN);
 		keymap.put("⌘+S", ActionManager.Action.SAVE);
 		keymap.put("⌘+Q", ActionManager.Action.QUIT);
+		keymap.put("⌘+W", ActionManager.Action.CLOSE);
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
 			if (e.getID() == KeyEvent.KEY_RELEASED) {

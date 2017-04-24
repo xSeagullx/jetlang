@@ -1,4 +1,7 @@
-package com.xseagullx.jetlang;
+package com.xseagullx.jetlang.ui;
+
+import com.xseagullx.jetlang.services.StyleManager;
+import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 
 import javax.swing.JEditorPane;
 import javax.swing.JScrollPane;
@@ -10,16 +13,17 @@ import javax.swing.text.StyledEditorKit;
 import java.awt.Component;
 import java.awt.Dimension;
 
-class OutPanel {
+/** UI component that is responsible for showing programm output and compilation results */
+public class OutPanel {
 	private final StyledDocument document;
 	private final StyleManager styleManager;
 
-	OutPanel(StyleManager styleManager) {
+	public OutPanel(StyleManager styleManager) {
 		this.styleManager = styleManager;
 		document = new DefaultStyledDocument();
 	}
 
-	Component getComponent() {
+	public Component getComponent() {
 		JEditorPane editorPane = new JEditorPane();
 		editorPane.setCaretColor(styleManager.caretColor);
 		editorPane.setEditorKit(new StyledEditorKit());
@@ -29,7 +33,7 @@ class OutPanel {
 		return jScrollPane;
 	}
 
-	void clear() {
+	public void clear() {
 		try {
 			document.remove(0, document.getLength());
 		}
@@ -38,7 +42,7 @@ class OutPanel {
 		}
 	}
 
-	void print(String text, AttributeSet style) {
+	public void print(String text, AttributeSet style) {
 		try {
 			document.insertString(document.getLength(), text, style);
 		}

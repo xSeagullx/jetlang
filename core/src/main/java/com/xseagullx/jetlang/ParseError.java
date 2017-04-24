@@ -1,11 +1,11 @@
 package com.xseagullx.jetlang;
 
 public class ParseError {
-	final int line;
-	final int col;
-	final int startOffset;
-	final int endOffset;
-	final String message;
+	private final int line;
+	private final int col;
+	private final String message;
+	public final int startOffset;
+	public final int endOffset;
 
 	ParseError(int line, int col, int startOffset, int endOffset, String message) {
 		this.line = line;

@@ -1,15 +1,17 @@
 package com.xseagullx.jetlang;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-class EditorState {
+public class EditorState {
 	private int lineNo;
 	private int colNo;
+	private File file;
 
 	private final List<Runnable> subscriptions = new ArrayList<>();
 
-	void subscribe(Runnable r) {
+	public void subscribe(Runnable r) {
 		subscriptions.add(r);
 	}
 
@@ -17,7 +19,7 @@ class EditorState {
 		subscriptions.forEach(Runnable::run);
 	}
 
-	int getLineNo() {
+	public int getLineNo() {
 		return lineNo;
 	}
 
@@ -26,12 +28,21 @@ class EditorState {
 		notifySubscriptions();
 	}
 
-	int getColNo() {
+	public int getColNo() {
 		return colNo;
 	}
 
 	void setColNo(int colNo) {
 		this.colNo = colNo;
+		notifySubscriptions();
+	}
+
+	public File getFile() {
+		return file;
+	}
+
+	public void setFile(File file) {
+		this.file = file;
 		notifySubscriptions();
 	}
 }
