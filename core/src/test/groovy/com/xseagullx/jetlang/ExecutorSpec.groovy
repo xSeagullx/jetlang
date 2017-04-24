@@ -62,10 +62,11 @@ class ExecutorSpec extends Specification {
 		"1.2 - 4.7"         || -3.5         | Double
 		"-1.2 - 4.7"        || -5.9         | Double
 		"-1.2 + 4.7"        || 3.5          | Double
-		"-1.2 * -7.8"       || -1.2 * -7.8  | Double
+		"-1.2 * -7.84"      || -1.2 * -7.84 | Double
 		"2 * 3 + 1"         || 7            | Integer
 		"2 * 3 + 1 / 4.0"   || 6.25         | Double
 		"2 * (3 + 1) / 4"   || 2            | Integer
+		"+1 + +2"           || 3            | Integer
 	}
 
 	@Unroll("Map #expr to #result")

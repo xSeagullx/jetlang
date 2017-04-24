@@ -13,7 +13,7 @@ fragment SIGN: ('-'|'+') ;
 fragment DIGIT: [0-9] ;
 fragment DOT: '.' ;
 INTEGER: SIGN? DIGIT+ ;
-REAL_NUMBER: SIGN? DIGIT+ (DOT DIGIT)? ;
+REAL_NUMBER: SIGN? DIGIT+ (DOT DIGIT+)? ;
 
 // Operators
 MUL: '*' ;

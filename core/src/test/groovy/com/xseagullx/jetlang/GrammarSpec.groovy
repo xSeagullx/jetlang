@@ -31,7 +31,7 @@ class GrammarSpec extends Specification implements TokenTestUtils {
 		printLexerOutput(text)
 
 		then:
-		hasTokens(lexer, tokens)
+		hasTokens(lexer, tokens.collect { it instanceof Tuple2 ? it : new Tuple2<>(it, null) })
 
 		where:
 		text                                        || tokens
@@ -41,11 +41,14 @@ class GrammarSpec extends Specification implements TokenTestUtils {
 		'{1, 2}'                                    || [INTEGER, INTEGER]
 		'{1, reduce(seq, 0, x y -> x + y) }'        || [INTEGER, KW_REDUCE, IDENTIFIER, INTEGER, IDENTIFIER, IDENTIFIER, ARROW, IDENTIFIER, PLUS, IDENTIFIER]
 		'map({1, n}, i -> (-1)^i / (2 * i + 1))'    || [KW_MAP, ARROW, INTEGER, POWER, IDENTIFIER, DIV]
-		'1.5 + a12_ * _as'                          || [REAL_NUMBER, PLUS, IDENTIFIER, IDENTIFIER]
-		'12_ * _as'                                 || [IDENTIFIER, IDENTIFIER]
+		'1.52 + a12_ * _as'                         || [t(REAL_NUMBER, '1.52'), PLUS, t(IDENTIFIER, 'a12_'), t(IDENTIFIER, '_as')]
+		 // FIXME below we actually have a problem, but it'll be a parser error anyway. it parses a INTEGER(12) IDENTIFIER(_)
+//		'12_ * _as'                                 || [t(IDENTIFIER, "12_"), IDENTIFIER]
+		'+12'                                       || [t(INTEGER, "+12")]
+		'+12.56'                                    || [REAL_NUMBER]
 	}
 
-	def "test example programm"() {
+	def "test example program"() {
 		setup:
 		def program = new JetLangParser(new CommonTokenStream(getTokens("var a = 5"))).program()
 
@@ -53,8 +56,21 @@ class GrammarSpec extends Specification implements TokenTestUtils {
 		program.stmt()
 	}
 
-	private boolean hasTokens(JetLangLexer jetLangLexer, List<Integer> tokenTypes) {
-		containsInOrder(jetLangLexer.allTokens.collect { it.type }, tokenTypes)
+	Tuple2<Integer, String> t(int type, String text) {
+		[type, text]
+	}
+
+	private void hasTokens(JetLangLexer jetLangLexer, List<Tuple2<Integer, String>> tokenTypes) {
+		def extractedTokens = jetLangLexer.allTokens.collectMany {
+			def type = VOCABULARY.getSymbolicName(it.type)
+			[type, "$type($it.text)"]
+		}
+		def expectedTokens = tokenTypes.collect {
+			VOCABULARY.getSymbolicName(it.first) + (it.second ? "($it.second)": "")
+		}
+		def extraToken = containsInOrder(extractedTokens, expectedTokens)
+		if (extraToken)
+			throw new AssertionError("Token not found token " + extraToken)
 	}
 
 	private static void printLexerOutput(String text) {

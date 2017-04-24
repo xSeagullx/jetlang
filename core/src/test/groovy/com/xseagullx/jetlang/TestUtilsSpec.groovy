@@ -7,9 +7,14 @@ class TestUtilsSpec extends Specification implements TokenTestUtils {
 	@SuppressWarnings("GroovyPointlessBoolean")
 	@Unroll("[1, 2, 3, 4, 5] contains in order #expectedElements is #result")
 	def "test containsInOrder"() {
-		expect:
+		setup:
 		def listToCheck = (1..5).toList()
-		containsInOrder(listToCheck, expectedElements) == result
+
+		when:
+		def success = containsInOrder(listToCheck, expectedElements) == null
+
+		then:
+		success == result
 
 		where:
 		result   || expectedElements
