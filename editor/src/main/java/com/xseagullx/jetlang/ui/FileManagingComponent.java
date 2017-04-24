@@ -24,21 +24,14 @@ public class FileManagingComponent {
 	}
 
 	public void openFileDialog(JFrame frame) {
-		JFileChooser chooser = new JFileChooser();
-		chooser.setFileFilter(new FileNameExtensionFilter("JL and plain text files", "jl", "txt"));
+		JFileChooser chooser = createFileChooser();
 		int returnVal = chooser.showOpenDialog(frame);
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			onOpen.accept(chooser.getSelectedFile());
 	}
 
 	public void saveFile(JFrame frame, String text) {
-		if (editorState.getFile() == null) {
-			JFileChooser chooser = new JFileChooser();
-			int returnVal = chooser.showSaveDialog(frame);
-			if (returnVal == JFileChooser.APPROVE_OPTION)
-				editorState.setFile(chooser.getSelectedFile());
-		}
-
+		promptSelectFile(frame);
 		if (editorState.getFile() == null)
 			return;
 
@@ -52,5 +45,21 @@ public class FileManagingComponent {
 		catch (IOException e) {
 			throw new RuntimeException(e); // todo show in ide
 		}
+	}
+
+	private void promptSelectFile(JFrame frame) {
+		if (editorState.getFile() == null) {
+			JFileChooser chooser = createFileChooser();
+			int returnVal = chooser.showSaveDialog(frame);
+			if (returnVal == JFileChooser.APPROVE_OPTION)
+				editorState.setFile(chooser.getSelectedFile());
+		}
+	}
+
+	private JFileChooser createFileChooser() {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new File("."));
+		chooser.setFileFilter(new FileNameExtensionFilter("JL and plain text files", "jl", "txt"));
+		return chooser;
 	}
 }

@@ -24,6 +24,7 @@ import java.awt.Dimension;
 import java.awt.Label;
 import java.awt.Point;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -88,6 +89,7 @@ public class EditPanel {
 
 	public void setText(String text) {
 		try {
+			errors = null;
 			document.remove(0, document.getLength());
 			document.insertString(0, text, null);
 		}
@@ -162,6 +164,8 @@ public class EditPanel {
 	}
 
 	private List<ParseError> errorsAtPos(int caretPos) {
-		return errors.stream().filter(it -> it.startOffset <= caretPos && it.endOffset >= caretPos).collect(Collectors.toList());
+		return errors == null
+           ? Collections.emptyList()
+           : errors.stream().filter(it -> it.startOffset <= caretPos && it.endOffset >= caretPos).collect(Collectors.toList());
 	}
 }

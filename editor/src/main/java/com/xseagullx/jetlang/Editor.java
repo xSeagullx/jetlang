@@ -55,6 +55,9 @@ class Editor {
 		JFrame frame = createFrame();
 		Keymap.register(actionManager);
 		FileManagingComponent fileComponent = new FileManagingComponent(this::open, editorState);
+		editorState.subscribe(() ->
+			frame.setTitle(editorState.getFile() != null ? "File: " + editorState.getFile().getAbsolutePath() : "New file")
+		);
 
 		actionManager.register(ActionManager.Action.RUN, (action) -> runProgram());
 		actionManager.register(ActionManager.Action.QUIT, (action) -> frame.dispose());
