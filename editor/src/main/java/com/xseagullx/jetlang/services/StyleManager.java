@@ -11,8 +11,6 @@ import javax.swing.text.StyleConstants;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -30,7 +28,7 @@ public class StyleManager {
 	public StyleManager() {
 		Font font;
 		try {
-			InputStream fontStream = new FileInputStream(new File("/Users/seagull/Dev/home/jetlang/editor/src/main/resources/fonts/Inconsolata-LGC.ttf"));
+			InputStream fontStream = this.getClass().getResourceAsStream("/fonts/Inconsolata-LGC.ttf");
 			font = Font.createFont(Font.TRUETYPE_FONT, fontStream);
 		}
 		catch (FontFormatException | IOException e) {
