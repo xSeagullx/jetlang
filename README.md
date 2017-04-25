@@ -33,4 +33,10 @@ Architecture layers in order of ascending visibility. i.e. `core` knows nothing.
 3. editor ui level: com.xseagullx.jetlang.ui (EditPanel, OutPanel, MiscPanel, FileManagingComponent)
 4. editor main classes (Editor)
 
-__(WIP)__
+
+# Screenshots
+![Running with error](/misc/Runnning%20with%20error.png)
+![Cancelled](/misc/Cancelled.png)
+![Success](/misc/Success.png)
+
+# __(WIP)__
