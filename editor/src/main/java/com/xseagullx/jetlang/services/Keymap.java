@@ -3,17 +3,18 @@ package com.xseagullx.jetlang.services;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Keymap {
 	public static void register(ActionManager actionManager) {
-		HashMap<String, ActionManager.Action> keymap = new HashMap<>();
-		keymap.put("⌘+⏎", ActionManager.Action.RUN);
-		keymap.put("⌘+O", ActionManager.Action.OPEN);
-		keymap.put("⌘+S", ActionManager.Action.SAVE);
-		keymap.put("⌘+Q", ActionManager.Action.QUIT);
-		keymap.put("⌘+W", ActionManager.Action.CLOSE);
-		keymap.put("⌘+T", ActionManager.Action.TOGGLE_SLOW_MO);
-		keymap.put("⎋", ActionManager.Action.STOP);
+		Map<String, ActionManager.Action> keymap = new HashMap<>();
+		bind(keymap, ActionManager.Action.RUN, "⌘+⏎", "Ctrl+Enter");
+		bind(keymap, ActionManager.Action.OPEN, "⌘+O", "Ctrl+O");
+		bind(keymap, ActionManager.Action.SAVE, "⌘+S", "Ctrl+S");
+		bind(keymap, ActionManager.Action.QUIT, "⌘+Q", "Ctrl+Q");
+		bind(keymap, ActionManager.Action.CLOSE, "⌘+W", "Ctrl+W");
+		bind(keymap, ActionManager.Action.TOGGLE_SLOW_MO, "⌘+T", "Ctrl+T");
+		bind(keymap, ActionManager.Action.STOP, "⎋", "Escape");
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
 			if (e.getID() == KeyEvent.KEY_RELEASED) {
@@ -28,5 +29,10 @@ public class Keymap {
 			}
 			return false;
 		});
+	}
+
+	private static void bind(Map<String, ActionManager.Action> keymap, ActionManager.Action action, String... shortcuts) {
+		for (String shortcut : shortcuts)
+			keymap.put(shortcut, action);
 	}
 }
