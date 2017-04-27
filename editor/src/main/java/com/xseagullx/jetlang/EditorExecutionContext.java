@@ -1,5 +1,6 @@
 package com.xseagullx.jetlang;
 
+import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor;
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext;
 import com.xseagullx.jetlang.runtime.stack.nodes.Expression;
 import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
@@ -10,12 +11,13 @@ import javax.swing.SwingUtilities;
 
 public class EditorExecutionContext extends SimpleExecutionContext {
 	private static final int SLOW_MO_DELAY_MS = 100;
+
 	private final OutPanel outputPanel;
 	private final StyleManager styleManager;
 	private final boolean slowMode;
-	private volatile boolean cancelled = false;
 
 	EditorExecutionContext(OutPanel outputPanel, StyleManager styleManager, boolean slowMode) {
+		super(new ForkJoinExecutor(100));
 		this.outputPanel = outputPanel;
 		this.styleManager = styleManager;
 		this.slowMode = slowMode;
@@ -30,20 +32,13 @@ public class EditorExecutionContext extends SimpleExecutionContext {
 	}
 
 	@Override public void exec(Statement statement) {
-		handleCancellation(statement);
 		delayExecution();
 		super.exec(statement);
 	}
 
 	@Override public Object exec(Expression expression) {
-		handleCancellation(expression);
 		delayExecution();
 		return super.exec(expression);
-	}
-
-	private void handleCancellation(TokenInformationHolder node) {
-		if (cancelled)
-			throw exception("Execution has been cancelled", node);
 	}
 
 	private void delayExecution() {
@@ -55,9 +50,5 @@ public class EditorExecutionContext extends SimpleExecutionContext {
 				// just wake up
 			}
 		}
-	}
-
-	@Override public void cancel() {
-		cancelled = true;
 	}
 }

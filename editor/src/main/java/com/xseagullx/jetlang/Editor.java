@@ -1,6 +1,7 @@
 package com.xseagullx.jetlang;
 
 import com.xseagullx.jetlang.services.ActionManager;
+import com.xseagullx.jetlang.services.AlreadyRunningException;
 import com.xseagullx.jetlang.services.HighlightTask;
 import com.xseagullx.jetlang.services.HighlightingService;
 import com.xseagullx.jetlang.services.Keymap;
@@ -14,6 +15,7 @@ import com.xseagullx.jetlang.ui.OutPanel;
 import com.xseagullx.jetlang.utils.FileUtils;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -122,13 +124,19 @@ class Editor {
 	}
 
 	private void runProgram() {
-		context = new EditorExecutionContext(outputPanel, styleManager, editorState.isSlowMode());
-		outputPanel.clear();
-		runService.execute(editPanel.getDocumentSnapshot(), context);
+		try {
+			EditorExecutionContext context = new EditorExecutionContext(outputPanel, styleManager, editorState.isSlowMode());
+			runService.execute(editPanel.getDocumentSnapshot(), context);
+			outputPanel.clear();
+			this.context = context;
+		}
+		catch (AlreadyRunningException e) {
+			JOptionPane.showMessageDialog(null, "You can run only one instance of program. Please wait or cancel old one with [ESC] key.");
+		}
 	}
 
 	private void stopProgram() {
 		if (context != null)
-			context.cancel();
+			context.stopExecution(null);
 	}
 }

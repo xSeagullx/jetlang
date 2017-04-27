@@ -3,8 +3,6 @@ package com.xseagullx.jetlang.runtime.stack.nodes;
 import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.Sequence;
 
-import java.util.stream.Collectors;
-
 public class MapExpression extends Expression {
 	private final Expression sequenceExpr;
 	private final LambdaExpression lambda;
@@ -20,6 +18,6 @@ public class MapExpression extends Expression {
 			throw context.exception("First argument to map shall be a sequence: Found: " + maybeSequence, this);
 
 		Sequence sequence = (Sequence)maybeSequence;
-		return new Sequence(sequence.list.stream().map( i -> lambda.apply(context, i)).collect(Collectors.toList()));
+		return new Sequence(context.map(sequence.list, lambda));
 	}
 }

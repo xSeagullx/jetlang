@@ -1,14 +1,16 @@
 package com.xseagullx.jetlang
 
+import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext
 import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class ExecutorSpec extends Specification {
-	def context = Spy(SimpleExecutionContext)
-
 	def "define and print variable"() {
+		setup:
+		def context = Spy(SimpleExecutionContext, constructorArgs: [Stub(ForkJoinExecutor, constructorArgs: [100])])
+
 		when:
 		def program = """
 			var a = 5
@@ -16,7 +18,7 @@ class ExecutorSpec extends Specification {
 			out a
 		"""
 
-		execute(program)
+		execute(context, program)
 
 		then:"Program produces output"
 		1 * context.print("a =")
@@ -28,8 +30,11 @@ class ExecutorSpec extends Specification {
 	}
 
 	def "work with range"() {
+		setup:
+		def context = new SimpleExecutionContext(Stub(ForkJoinExecutor, constructorArgs: [100]))
+
 		when:
-		execute("var a = {1, 5}")
+		execute(context, "var a = {1, 5}")
 
 		then: "state is preserved"
 		context.isVariableDefined("a")
@@ -42,8 +47,11 @@ class ExecutorSpec extends Specification {
 	@SuppressWarnings("GroovyAssignabilityCheck")
 	@Unroll("Check that #expression == #result")
 	def "operators"() {
+		setup:
+		def context = new SimpleExecutionContext(Stub(ForkJoinExecutor, constructorArgs: [100]))
+
 		when:
-		execute("var a = " + expression)
+		execute(context, "var a = " + expression)
 
 		then: "state is preserved"
 		def aValue = context.getVariable("a")
@@ -71,8 +79,11 @@ class ExecutorSpec extends Specification {
 
 	@Unroll("Map #expr to #result")
 	def "map function"() {
+		setup: "use real context, as the spy is not threadsafe"
+		def context = new SimpleExecutionContext(new ForkJoinExecutor(100))
+
 		when:
-		execute("var a = $expr")
+		execute(context, "var a = $expr")
 
 		then:
 		def variable = context.getVariable("a")
@@ -90,6 +101,12 @@ class ExecutorSpec extends Specification {
 
 	def "execute example program"() {
 		setup: "Calc pi same way, as in program"
+		def valuesPrinted = []
+		def context = new SimpleExecutionContext(new ForkJoinExecutor(100)) {
+			@Override void print(Object value) {
+				valuesPrinted << String.valueOf(value)
+			}
+		}
 		def expectedMap = (0..150).toList().collect { (((-1.0d) ** it as double) / (2.0 * it + 1)) as double }
 		def expectedPi = 4 * expectedMap.inject(0) { acc, it -> acc + it }
 		println(expectedPi)
@@ -103,7 +120,7 @@ class ExecutorSpec extends Specification {
 		"""
 
 		when:
-		execute(text)
+		execute(context, text)
 
 		then: "values are computed correctly"
 		context.getVariable("n") == 150
@@ -111,14 +128,16 @@ class ExecutorSpec extends Specification {
 		context.getVariable("pi") == expectedPi
 
 		and: "there was an output"
-		1 * context.print("pi = ")
-		1 * context.print(expectedPi)
+		valuesPrinted == ["pi = ", "$expectedPi"]
 	}
 
 	@Unroll("#text produces error: '#errorMessage'")
 	def "error handling"() {
+		setup:
+		def context = new SimpleExecutionContext(new ForkJoinExecutor(100))
 		when:
-		execute(text)
+		execute(context, text)
+		context.executionOutcome().get()
 
 		then:
 		def e = thrown(JetLangException)
@@ -142,7 +161,18 @@ class ExecutorSpec extends Specification {
 		//"var a = 5\nvar a = 4"              || "Variable 'a' is already declared"
 	}
 
-	private execute(String program) {
+	void "integration test for big map (imply parallel execution)"() {
+		setup:
+		def context = new SimpleExecutionContext(new ForkJoinExecutor(100))
+		new StackMachineCompiler().parse("var a = map({0, 10000}, i -> map({i, i + 1}, i2 -> i2 * 2))").program.execute(context)
+
+		expect:
+		def a = (context.getVariable("a") as Sequence).list
+		def expectedA = (0..10000).toList().collect { i -> new Sequence([i, i + 1].collect { i2 -> i2 * 2 }) }
+		a == expectedA
+	}
+
+	private static void execute(ExecutionContext context, String program) {
 		new StackMachineCompiler().parse(program).program.execute(context)
 	}
 }
