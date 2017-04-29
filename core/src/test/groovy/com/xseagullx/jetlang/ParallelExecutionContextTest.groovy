@@ -1,0 +1,61 @@
+package com.xseagullx.jetlang
+
+import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor
+import com.xseagullx.jetlang.runtime.stack.ParallelExecutor
+import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext
+import com.xseagullx.jetlang.runtime.stack.nodes.ConstExpression
+import com.xseagullx.jetlang.runtime.stack.nodes.OutStatement
+import spock.lang.Specification
+
+class ParallelExecutionContextTest extends Specification {
+	ParallelExecutor forkJoinExecutor = Stub(ForkJoinExecutor, constructorArgs: [100])
+	def context = new SimpleExecutionContext(forkJoinExecutor)
+
+	def "when we branch context, interruption flag is preserved in child"() {
+		setup:
+		def parallelContext = context.copy()
+
+		when:
+		parallelContext.stopExecution(null)
+
+		then:
+		context.getExecutionOutcome().completedExceptionally
+	}
+
+	def "when we branch context, interruption flag is preserved in parent"() {
+		setup:
+		def parallelContext = context.copy()
+
+		when:
+		context.stopExecution(null)
+
+		then:
+		parallelContext.getExecutionOutcome().completedExceptionally
+	}
+
+	def "if context is stopped, expression execution does nothing"() {
+		setup:
+		context.stopExecution(null)
+		Object res
+
+		when:
+		res = context.exec(new ConstExpression<Integer>(5))
+
+		then:
+		thrown JetLangException
+		res == null
+	}
+
+	def "if context is stopped, statement execution does nothing"() {
+		setup:
+		def mockStatement = Mock(OutStatement)
+		context.stopExecution(null)
+
+		when:
+		context.exec(mockStatement)
+
+		then:
+		thrown JetLangException
+		0 * mockStatement.exec(context)
+	}
+}

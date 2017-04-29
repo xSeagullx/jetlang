@@ -14,7 +14,7 @@ public class LambdaExpression extends TokenInformationHolder {
 		this.body = body;
 	}
 
-	Object apply(ExecutionContext context, Object ... args) {
+	public Object apply(ExecutionContext context, Object... args) {
 		context.push(this);
 		defineArgumentVariables(context, args);
 		Object res = context.exec(body);

@@ -5,7 +5,6 @@ import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
 import java.io.IOException;
@@ -37,13 +36,13 @@ public class FileManagingComponent {
 
 		try {
 			Files.write(Paths.get(editorState.getFile().getPath()), text.getBytes("UTF-8"));
-			JOptionPane.showMessageDialog(frame, "File saved");
+			Dialogs.showMessage("File saved");
 		}
 		catch (UnsupportedEncodingException e) {
 			throw new ThisShouldNeverHappenException(e);
 		}
 		catch (IOException e) {
-			throw new RuntimeException(e); // todo show in ide
+			Dialogs.showMessage("Error saving file: " + e.getMessage());
 		}
 	}
 

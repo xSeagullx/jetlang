@@ -18,8 +18,16 @@ class StackBasedProgram implements Program {
 	}
 
 	@Override public void execute(ExecutionContext existingContext) {
-		ExecutionContext context = existingContext != null ? existingContext : new SimpleExecutionContext();
-		for (Statement statement : statements)
-			context.exec(statement);
+		ForkJoinExecutor forkJoinExecutor = null;
+		try {
+			forkJoinExecutor = new ForkJoinExecutor(100);
+			ExecutionContext context = existingContext != null ? existingContext : new SimpleExecutionContext(forkJoinExecutor);
+			for (Statement statement : statements)
+				context.exec(statement);
+		}
+		finally {
+			if (forkJoinExecutor != null)
+				forkJoinExecutor.destroy();
+		}
 	}
 }
