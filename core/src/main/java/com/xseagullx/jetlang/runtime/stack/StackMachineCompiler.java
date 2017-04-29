@@ -19,6 +19,7 @@ import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableDeclaration;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableExpression;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.Collections;
@@ -80,7 +81,8 @@ public class StackMachineCompiler extends Compiler {
 		List<JetLangParser.ExprContext> exprContexts = reduce.expr();
 		List<String> variableNames = reduce.IDENTIFIER().stream().map(ParseTree::getText).collect(Collectors.toList());
 		LambdaExpression lambda = new LambdaExpression(variableNames, parse(exprContexts.get(2)));
-		addMetadata(lambda, expr); // todo lambda's bounds
+		Token startOfLambda = reduce.IDENTIFIER().get(0).getSymbol();
+		addMetadata(lambda, startOfLambda);
 		ReduceExpression reduceExpression = new ReduceExpression(parse(exprContexts.get(0)), parse(exprContexts.get(1)), lambda);
 		return addMetadata(reduceExpression, expr);
 	}
@@ -89,7 +91,8 @@ public class StackMachineCompiler extends Compiler {
 		List<JetLangParser.ExprContext> exprContexts = expr.map().expr();
 		String variable = expr.map().identifier().IDENTIFIER().getText();
 		LambdaExpression lambda = new LambdaExpression(Collections.singletonList(variable), parse(exprContexts.get(1)));
-		addMetadata(lambda, expr); // todo lambda's bounds
+		Token startOfLambda = expr.map().identifier().IDENTIFIER().getSymbol();
+		addMetadata(lambda, startOfLambda);
 		return addMetadata(new MapExpression(parse(exprContexts.get(0)), lambda), expr);
 	}
 
@@ -133,7 +136,11 @@ public class StackMachineCompiler extends Compiler {
 	}
 
 	private <T extends TokenInformationHolder> T addMetadata(T node, ParserRuleContext ctx) {
-		node.setTokenInfo(node.getClass().getSimpleName(), ctx.start.getLine(), ctx.start.getCharPositionInLine() + 1);
+		return addMetadata(node, ctx.start);
+	}
+
+	private <T extends TokenInformationHolder> T addMetadata(T node, Token token) {
+		node.setTokenInfo(node.getClass().getSimpleName(), token.getLine(), token.getCharPositionInLine() + 1);
 		return node;
 	}
 }

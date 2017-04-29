@@ -81,7 +81,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 		}
 		catch (Throwable e) {
 			if (stopExecution(e))
-				throw exception("Fatal runtime exception while executing " + statement + "\n" + e.getMessage(), statement);
+				throw exception("Fatal runtime exception during execution\n" + e.getMessage(), statement);
 			throw e;
 		}
 	}
@@ -100,7 +100,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 		}
 		catch (Throwable e) {
 			if (stopExecution(e))
-				throw exception("Fatal runtime exception while executing " + expression + "\n" + e.getMessage(), expression);
+				throw exception("Fatal runtime exception during execution\n" + e.getMessage(), expression);
 			throw e;
 		}
 	}
