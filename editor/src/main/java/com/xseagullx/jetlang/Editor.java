@@ -1,5 +1,8 @@
 package com.xseagullx.jetlang;
 
+import com.xseagullx.jetlang.runtime.stack.ExecutionListener;
+import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor;
+import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext;
 import com.xseagullx.jetlang.services.ActionManager;
 import com.xseagullx.jetlang.services.AlreadyRunningException;
 import com.xseagullx.jetlang.services.HighlightTask;
@@ -8,6 +11,7 @@ import com.xseagullx.jetlang.services.Keymap;
 import com.xseagullx.jetlang.services.RunService;
 import com.xseagullx.jetlang.services.StyleManager;
 import com.xseagullx.jetlang.services.TaskManager;
+import com.xseagullx.jetlang.ui.Dialogs;
 import com.xseagullx.jetlang.ui.EditPanel;
 import com.xseagullx.jetlang.ui.FileManagingComponent;
 import com.xseagullx.jetlang.ui.MiscPanel;
@@ -15,10 +19,10 @@ import com.xseagullx.jetlang.ui.OutPanel;
 import com.xseagullx.jetlang.utils.FileUtils;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.text.AttributeSet;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.FontFormatException;
@@ -29,9 +33,9 @@ import java.util.logging.Logger;
 /** High level component managing editor interactions. */
 class Editor {
 	private static final Logger log = Logger.getLogger(Editor.class.getName());
+	private static final int SLOW_MO_DELAY_MS = 100;
 
-	// TODO CTrl шорткаты для Windows. Парсинг конфига из JSON
-	// TODO create distribution for editor and compiler
+	// TODO Парсинг конфига из JSON
 
 	private final StyleManager styleManager = new StyleManager();
 	private final ActionManager actionManager = new ActionManager();
@@ -39,7 +43,7 @@ class Editor {
 	private final RunService runService = new RunService(taskManager);
 	private HighlightingService highlightingService = new HighlightingService(styleManager);
 	private EditorState editorState = new EditorState();
-	private EditorExecutionContext context;
+	private SimpleExecutionContext context;
 
 	private final OutPanel outputPanel;
 	private final EditPanel editPanel;
@@ -102,7 +106,7 @@ class Editor {
 				editPanel.setText(text);
 			}
 			catch (IOException e) {
-				throw new RuntimeException(e); // todo show in ide
+				Dialogs.showMessage("Error opening file: '" + file.getAbsolutePath() + "'." + e.getMessage());
 			}
 		}
 	}
@@ -125,13 +129,39 @@ class Editor {
 
 	private void runProgram() {
 		try {
-			EditorExecutionContext context = new EditorExecutionContext(outputPanel, styleManager, editorState.isSlowMode());
+			boolean isSlowMode = editorState.isSlowMode();
+			SimpleExecutionContext context = new SimpleExecutionContext(new ForkJoinExecutor(100));
+			context.setExecutionListener(new ExecutionListener() {
+				@Override public void onExecute(SimpleExecutionContext context, TokenInformationHolder currentToken) {
+					if (isSlowMode)
+						try {
+							Thread.sleep(SLOW_MO_DELAY_MS);
+						}
+						catch (InterruptedException ignored) {
+							// Just wake up
+						}
+				}
+
+				@Override public void onPrint(SimpleExecutionContext context, Object value) {
+					println(value, styleManager.main);
+				}
+
+				@Override public void onError(SimpleExecutionContext context, Object value) {
+					println(value, styleManager.error);
+				}
+
+				private void println(Object value, AttributeSet style) {
+					String val = Thread.currentThread().getName() + ": " + String.valueOf(value) + "\n";
+					SwingUtilities.invokeLater(() -> outputPanel.print(val, style));
+				}
+			});
+
 			runService.execute(editPanel.getDocumentSnapshot(), context);
 			outputPanel.clear();
 			this.context = context;
 		}
 		catch (AlreadyRunningException e) {
-			JOptionPane.showMessageDialog(null, "You can run only one instance of program. Please wait or cancel old one with [ESC] key.");
+			Dialogs.showMessage("You can run only one instance of program. Please wait or cancel old one with [ESC] key.");
 		}
 	}
 

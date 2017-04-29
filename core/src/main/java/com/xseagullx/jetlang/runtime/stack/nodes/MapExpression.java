@@ -18,6 +18,6 @@ public class MapExpression extends Expression {
 			throw context.exception("First argument to map shall be a sequence: Found: " + maybeSequence, this);
 
 		Sequence sequence = (Sequence)maybeSequence;
-		return new Sequence(context.map(sequence.list, lambda));
+		return new Sequence(context.map(sequence, lambda));
 	}
 }

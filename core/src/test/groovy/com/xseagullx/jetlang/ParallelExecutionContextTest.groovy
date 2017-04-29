@@ -19,7 +19,7 @@ class ParallelExecutionContextTest extends Specification {
 		parallelContext.stopExecution(null)
 
 		then:
-		context.executionOutcome().completedExceptionally
+		context.getExecutionOutcome().completedExceptionally
 	}
 
 	def "when we branch context, interruption flag is preserved in parent"() {
@@ -30,7 +30,7 @@ class ParallelExecutionContextTest extends Specification {
 		context.stopExecution(null)
 
 		then:
-		parallelContext.executionOutcome().completedExceptionally
+		parallelContext.getExecutionOutcome().completedExceptionally
 	}
 
 	def "if context is stopped, expression execution does nothing"() {

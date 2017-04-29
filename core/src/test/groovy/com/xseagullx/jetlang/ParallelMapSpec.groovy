@@ -87,7 +87,7 @@ class ParallelMapSpec extends Specification {
 		then:
 		thrown(JetLangException)
 
-		context.executionOutcome().completedExceptionally
+		context.getExecutionOutcome().completedExceptionally
 		result == null
 	}
 
@@ -119,7 +119,7 @@ class ParallelMapSpec extends Specification {
 		e.cause instanceof JetLangException
 
 		and:
-		context.executionOutcome().completedExceptionally
+		context.getExecutionOutcome().completedExceptionally
 	}
 
 	void cleanup() {

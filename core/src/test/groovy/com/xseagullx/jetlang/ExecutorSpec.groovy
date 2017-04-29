@@ -1,5 +1,6 @@
 package com.xseagullx.jetlang
 
+import com.xseagullx.jetlang.runtime.stack.ExecutionListener
 import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext
 import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler
@@ -101,9 +102,11 @@ class ExecutorSpec extends Specification {
 
 	def "execute example program"() {
 		setup: "Calc pi same way, as in program"
+		def eps = 1e-12
 		def valuesPrinted = []
-		def context = new SimpleExecutionContext(new ForkJoinExecutor(100)) {
-			@Override void print(Object value) {
+		def context = new SimpleExecutionContext(new ForkJoinExecutor(100))
+		context.executionListener = new ExecutionListener() {
+			@Override void onPrint(SimpleExecutionContext ctx, Object value) {
 				valuesPrinted << String.valueOf(value)
 			}
 		}
@@ -125,10 +128,11 @@ class ExecutorSpec extends Specification {
 		then: "values are computed correctly"
 		context.getVariable("n") == 150
 		(context.getVariable("sequence") as Sequence).list == expectedMap
-		context.getVariable("pi") == expectedPi
+		double calculatedPi = context.getVariable("pi") as double
+		Math.abs(calculatedPi - expectedPi) < eps
 
 		and: "there was an output"
-		valuesPrinted == ["pi = ", "$expectedPi"]
+		valuesPrinted == ["pi = ", "$calculatedPi"]
 	}
 
 	@Unroll("#text produces error: '#errorMessage'")
@@ -137,7 +141,7 @@ class ExecutorSpec extends Specification {
 		def context = new SimpleExecutionContext(new ForkJoinExecutor(100))
 		when:
 		execute(context, text)
-		context.executionOutcome().get()
+		context.getExecutionOutcome().get()
 
 		then:
 		def e = thrown(JetLangException)

@@ -28,9 +28,14 @@ public interface ExecutionContext {
 	void exec(Statement statement);
 	Object exec(Expression expression);
 
+	/**
+	 * Constructs JetLang exception with proper (JetLang) stacktrace.
+	 * Prints error in via {@link #print(Object)} method.
+	 */
 	JetLangException exception(String message, TokenInformationHolder holder);
 
-	List<Object> map(List<Object> list, LambdaExpression lambda);
+	List<Object> map(Sequence list, LambdaExpression lambda);
+	Object reduce(Sequence sequence, Object initialValue, LambdaExpression lambda);
 
 	/** Stops current execution.
 	 * Optional operation: does nothing if execution is not running.
@@ -41,5 +46,6 @@ public interface ExecutionContext {
 
 	ExecutionContext copy();
 
-	CompletableFuture<Void> executionOutcome();
+	CompletableFuture<Void> getExecutionOutcome();
+
 }

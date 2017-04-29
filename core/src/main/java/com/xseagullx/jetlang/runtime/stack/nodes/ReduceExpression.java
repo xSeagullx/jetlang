@@ -20,9 +20,7 @@ public class ReduceExpression extends Expression {
 			throw context.exception("First argument to reduce shall be a sequence: Found: " + maybeSequence, this);
 
 		Sequence sequence = (Sequence)maybeSequence;
-
 		Object initialValue = context.exec(initialValueExpr);
-
-		return sequence.list.stream().reduce(initialValue, (acc, i) -> lambda.apply(context, acc, i));
+		return context.reduce(sequence, initialValue, lambda);
 	}
 }

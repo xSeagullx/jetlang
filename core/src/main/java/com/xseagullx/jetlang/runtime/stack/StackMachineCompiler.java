@@ -133,7 +133,7 @@ public class StackMachineCompiler extends Compiler {
 	}
 
 	private <T extends TokenInformationHolder> T addMetadata(T node, ParserRuleContext ctx) {
-		node.setTokenInfo(node.getClass().getSimpleName(), ctx.start.getLine(), ctx.start.getCharPositionInLine());
+		node.setTokenInfo(node.getClass().getSimpleName(), ctx.start.getLine(), ctx.start.getCharPositionInLine() + 1);
 		return node;
 	}
 }

@@ -2,6 +2,7 @@ package com.xseagullx.jetlang.runtime.stack;
 
 import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.JetLangException;
+import com.xseagullx.jetlang.Sequence;
 import com.xseagullx.jetlang.TokenInformationHolder;
 import com.xseagullx.jetlang.runtime.stack.nodes.Expression;
 import com.xseagullx.jetlang.runtime.stack.nodes.LambdaExpression;
@@ -27,13 +28,14 @@ public class SimpleExecutionContext implements ExecutionContext {
 	private final Stack<Frame> frames = new Stack<>();
 	private final ParallelExecutor parallelExecutor;
 	private final CompletableFuture<Void> executionOutcome;
+	private ExecutionListener executionListener;
 
 	public SimpleExecutionContext(ParallelExecutor executor) {
 		parallelExecutor = executor;
 		executionOutcome = new CompletableFuture<>();
 
 		TokenInformationHolder tokenInformationHolder = new TokenInformationHolder();
-		tokenInformationHolder.setTokenInfo(Thread.currentThread().getName(), 0, 0);
+		tokenInformationHolder.setTokenInfo(Thread.currentThread().getName(), 1, 1);
 		push(tokenInformationHolder);
 	}
 
@@ -41,6 +43,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 	private SimpleExecutionContext(SimpleExecutionContext parent) {
 		executionOutcome = parent.executionOutcome;
 		parallelExecutor = parent.parallelExecutor;
+		executionListener = parent.executionListener;
 		push(parent.frames.peek().caller);
 	}
 
@@ -68,6 +71,8 @@ public class SimpleExecutionContext implements ExecutionContext {
 	@Override public void exec(Statement statement) {
 		try {
 			handleCancellation(statement);
+			if (executionListener != null)
+				executionListener.onExecute(this, statement);
 			statement.exec(this);
 		}
 		catch (JetLangException e) {
@@ -75,8 +80,9 @@ public class SimpleExecutionContext implements ExecutionContext {
 			throw e;
 		}
 		catch (Throwable e) {
-			stopExecution(e);
-			throw exception("Fatal runtime exception while executing " + statement + "\n" + e.getMessage(), statement);
+			if (stopExecution(e))
+				throw exception("Fatal runtime exception while executing " + statement + "\n" + e.getMessage(), statement);
+			throw e;
 		}
 	}
 
@@ -84,6 +90,8 @@ public class SimpleExecutionContext implements ExecutionContext {
 	@Override public Object exec(Expression expression) {
 		try {
 			handleCancellation(expression);
+			if (executionListener != null)
+				executionListener.onExecute(this, expression);
 			return expression.exec(this);
 		}
 		catch (JetLangException e) {
@@ -91,8 +99,9 @@ public class SimpleExecutionContext implements ExecutionContext {
 			throw e;
 		}
 		catch (Throwable e) {
-			stopExecution(e);
-			throw exception("Fatal runtime exception while executing " + expression + "\n" + e.getMessage(), expression);
+			if (stopExecution(e))
+				throw exception("Fatal runtime exception while executing " + expression + "\n" + e.getMessage(), expression);
+			throw e;
 		}
 	}
 
@@ -106,8 +115,12 @@ public class SimpleExecutionContext implements ExecutionContext {
 		return exception;
 	}
 
-	@Override public List<Object> map(List<Object> list, LambdaExpression lambda) {
-		return parallelExecutor.map(this, list, lambda);
+	@Override public Object reduce(Sequence sequence, Object initialValue, LambdaExpression lambda) {
+		return parallelExecutor.reduce(this, sequence.list, initialValue, lambda);
+	}
+
+	@Override public List<Object> map(Sequence sequence, LambdaExpression lambda) {
+		return parallelExecutor.map(this, sequence.list, lambda);
 	}
 
 	@Override public boolean stopExecution(Throwable e) {
@@ -126,12 +139,26 @@ public class SimpleExecutionContext implements ExecutionContext {
 		return new SimpleExecutionContext(this);
 	}
 
-	@Override public CompletableFuture<Void> executionOutcome() {
+	@Override public CompletableFuture<Void> getExecutionOutcome() {
 		return executionOutcome;
+	}
+
+	@Override public void print(Object value) {
+		if (executionListener != null)
+			executionListener.onPrint(this, value);
+	}
+
+	@Override public void error(String value) {
+		if (executionListener != null)
+			executionListener.onError(this, value);
 	}
 
 	private void handleCancellation(TokenInformationHolder node) {
 		if (executionOutcome.isDone())
-			throw new JetLangException("Stop execution", null, new TokenInformationHolder[0]);
+			throw new JetLangException("Stop execution", node, new TokenInformationHolder[0]);
+	}
+
+	public void setExecutionListener(ExecutionListener listener) {
+		this.executionListener = listener;
 	}
 }
