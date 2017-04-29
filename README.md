@@ -2,6 +2,7 @@
 ```
 # From project root
 ./gradlew install # will place application distributive in `editor/build/install/editor`.
+#Application should be started from it's distributive folder
 cd editor/build/install/editor
 ./bin/editor
 ```
@@ -23,6 +24,7 @@ Assumptions:
 4. All integer operations are performed with `java.lang.Integer`, all floating-point calculations - in `java.lang.Double`.
 5. `1 / 2` will yield `0`, as it's an integer division. `1.0 / 2` or `1 / 2.0` will give `0.5`.
 6. `config.json` shall be valid or non-existent.
+7. Distributive must be started from it's root folder. (just because config file is there). If you run it from IDEA, specify a working directory `editor/src/dist/`.
 
 # Architecture
 `core` project - jetLang compiler and runtime.
