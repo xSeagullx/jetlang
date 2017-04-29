@@ -4,6 +4,7 @@ import com.xseagullx.jetlang.CompilationResult;
 import com.xseagullx.jetlang.Compiler;
 import com.xseagullx.jetlang.JetLangLexer;
 import com.xseagullx.jetlang.ParseError;
+import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler;
 import org.antlr.v4.runtime.Token;
 
 import javax.swing.text.AttributeSet;
@@ -52,7 +53,7 @@ public class HighlightingService {
 	}
 
 	private List<ParseError> highlightErrors(DocumentSnapshot documentSnapshot, Collection<StyledChunk> results) {
-		CompilationResult compilationResult = Compiler.getErrors(documentSnapshot.text);
+		CompilationResult compilationResult = new StackMachineCompiler().parse(documentSnapshot.text);
 		if (!compilationResult.hasErrors())
 			return null;
 

@@ -16,8 +16,9 @@ class ParserSpec extends Specification {
 
 		where:
 		text                                                || error
-		"var sequence = map({, n}, i -> 1 + 3)"             || "[20..21] line 1:20 extraneous input ',' expecting {INTEGER, REAL_NUMBER, '{', '(', 'reduce', 'map', IDENTIFIER}"
-		"var 5 = 10"                                        || "[4..5] line 1:4 mismatched input '5' expecting IDENTIFIER"
+		"var sequence = map({, n}, i -> 1 + 3)"             || "[20..21] line 1:21 extraneous input ',' expecting {INTEGER, REAL_NUMBER, '{', '(', 'reduce', 'map', IDENTIFIER}"
+		"var 5 = 10"                                        || "[4..5] line 1:5 mismatched input '5' expecting IDENTIFIER"
+		"var a = 100000000000"                              || "[8..20] line 1:9 NumberFormatException"
 	}
 
 	@Unroll("Program: #text produces error: #error and stacktrace #stacktrace")

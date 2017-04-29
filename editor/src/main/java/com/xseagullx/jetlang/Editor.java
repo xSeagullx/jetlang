@@ -76,6 +76,8 @@ class Editor {
 			String title = file != null ? "File: " + file.getAbsolutePath() : "New file";
 			if (editorState.isSlowMode())
 				title += " : slooooow mode ON";
+			if (editorState.isShowThreads())
+				title += " : show threads ON";
 			frame.setTitle(title);
 			}
 		);
@@ -84,6 +86,7 @@ class Editor {
 	private void regiterActions(JFrame frame, FileManagingComponent fileComponent) {
 		actionManager.register(ActionManager.Action.RUN, (action) -> runProgram());
 		actionManager.register(ActionManager.Action.TOGGLE_SLOW_MO, (action) -> editorState.setSlowMode(!editorState.isSlowMode()));
+		actionManager.register(ActionManager.Action.TOGGLE_SHOW_THREADS, (action) -> editorState.setShowThreads(!editorState.isShowThreads()));
 		actionManager.register(ActionManager.Action.STOP, (action) -> stopProgram());
 		actionManager.register(ActionManager.Action.QUIT, (action) -> frame.dispose());
 		actionManager.register(ActionManager.Action.OPEN, (action) -> fileComponent.openFileDialog(frame));
@@ -141,6 +144,7 @@ class Editor {
 	private void runProgram() {
 		try {
 			boolean isSlowMode = editorState.isSlowMode();
+			boolean isShowThreads = editorState.isShowThreads();
 			SimpleExecutionContext context = new SimpleExecutionContext(new ForkJoinExecutor(100));
 			context.setExecutionListener(new ExecutionListener() {
 				@Override public void onExecute(SimpleExecutionContext context, TokenInformationHolder currentToken) {
@@ -162,13 +166,15 @@ class Editor {
 				}
 
 				private void println(Object value, AttributeSet style) {
-					String val = Thread.currentThread().getName() + ": " + String.valueOf(value) + "\n";
+					String val = (isShowThreads ? Thread.currentThread().getName() + ": " : "") + String.valueOf(value) + "\n";
 					SwingUtilities.invokeLater(() -> outputPanel.print(val, style));
 				}
 			});
 
 			runService.execute(editPanel.getDocumentSnapshot(), context);
 			outputPanel.clear();
+			if (isShowThreads)
+				outputPanel.print("Internal thread info will be shown in all printed messages\n", styleManager.main);
 			this.context = context;
 		}
 		catch (AlreadyRunningException e) {

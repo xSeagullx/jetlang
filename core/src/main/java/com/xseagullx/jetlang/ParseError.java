@@ -7,7 +7,7 @@ public class ParseError {
 	public final int startOffset;
 	public final int endOffset;
 
-	ParseError(int line, int col, int startOffset, int endOffset, String message) {
+	public ParseError(int line, int col, int startOffset, int endOffset, String message) {
 		this.line = line;
 		this.col = col;
 		this.startOffset = startOffset;

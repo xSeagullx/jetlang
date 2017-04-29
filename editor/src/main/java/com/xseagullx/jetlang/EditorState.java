@@ -11,6 +11,7 @@ public class EditorState {
 
 	private final List<Runnable> subscriptions = new ArrayList<>();
 	private boolean slowMode;
+	private boolean showThreads;
 
 	public void subscribe(Runnable r) {
 		subscriptions.add(r);
@@ -47,12 +48,21 @@ public class EditorState {
 		notifySubscriptions();
 	}
 
-	public boolean isSlowMode() {
+	boolean isSlowMode() {
 		return slowMode;
 	}
 
-	public void setSlowMode(boolean slowMode) {
+	void setSlowMode(boolean slowMode) {
 		this.slowMode = slowMode;
+		notifySubscriptions();
+	}
+
+	boolean isShowThreads() {
+		return showThreads;
+	}
+
+	void setShowThreads(boolean showThreads) {
+		this.showThreads = showThreads;
 		notifySubscriptions();
 	}
 }

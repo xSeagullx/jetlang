@@ -13,7 +13,8 @@ cd editor/build/install/editor
 4. __(CMD/Ctrl)+Q__ - quit editor application.
 5. __(CMD/Ctrl)+Enter__ - run JetLang program.
 5. __(CMD/Ctrl)+T__ - toggle slow mode (adds 100 ms delay to every step of JetLang program). Active only on the next run.
-6. __Esc__ - stops currently running JetLang program.
+6. __(CMD/Ctrl)+I__ - toggle display of threads in out panel. Active only on the next run.
+7. __Esc__ - stops currently running JetLang program.
 
 Assumptions:
 1. All files are handled in `UTF-8`.

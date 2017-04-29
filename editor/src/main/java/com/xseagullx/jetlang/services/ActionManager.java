@@ -11,13 +11,14 @@ public class ActionManager {
 		OPEN,
 		QUIT,
 		TOGGLE_SLOW_MO,
+		TOGGLE_SHOW_THREADS,
 		STOP,
 		RUN
 	}
 
 	private final Map<Action, Consumer<Action>> actionMap = new HashMap<>();
 
-	public void fire(Action action) {
+	void fire(Action action) {
 		Consumer<Action> actionConsumer = actionMap.get(action);
 		actionConsumer.accept(action);
 	}

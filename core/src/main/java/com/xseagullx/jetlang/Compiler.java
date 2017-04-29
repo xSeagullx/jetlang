@@ -18,13 +18,13 @@ public abstract class Compiler {
 		List<ParseError> errors = new ArrayList<>();
 		JetLangParser.ProgramContext programCtx = getJetLangParser(getJetLangLexer(text, errors), errors).program();
 		if (errors.isEmpty()) {
-			return new CompilationResult(doParse(programCtx));
+			return doParse(programCtx);
 		}
 		else
 			return new CompilationResult(errors);
 	}
 
-	protected abstract Program doParse(JetLangParser.ProgramContext programm);
+	protected abstract CompilationResult doParse(JetLangParser.ProgramContext programm);
 
 	public static JetLangLexer getJetLangLexer(String text, List<ParseError> errors) {
 		JetLangLexer lexer;
@@ -56,16 +56,10 @@ public abstract class Compiler {
 					Token token = (Token)offendingSymbol;
 					int startOffset = token.getStartIndex();
 					int endOffset = startOffset + (token.getText() != null ? token.getText().length() : 1);
-					errors.add(new ParseError(token.getLine(), token.getCharPositionInLine(), startOffset, endOffset, msg));
+					errors.add(new ParseError(token.getLine(), token.getCharPositionInLine() + 1, startOffset, endOffset, msg));
 				}
 			});
 		}
 		return parser;
-	}
-
-	public static CompilationResult getErrors(String text) {
-		List<ParseError> errors = new ArrayList<>();
-		getJetLangParser(getJetLangLexer(text, errors), errors).program();
-		return new CompilationResult(errors);
 	}
 }

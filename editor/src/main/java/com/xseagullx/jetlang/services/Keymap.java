@@ -10,6 +10,7 @@ import static java.awt.event.KeyEvent.KEY_RELEASED;
 import static java.awt.event.KeyEvent.META_MASK;
 import static java.awt.event.KeyEvent.VK_ENTER;
 import static java.awt.event.KeyEvent.VK_ESCAPE;
+import static java.awt.event.KeyEvent.VK_I;
 import static java.awt.event.KeyEvent.VK_O;
 import static java.awt.event.KeyEvent.VK_Q;
 import static java.awt.event.KeyEvent.VK_S;
@@ -53,6 +54,7 @@ public class Keymap {
 		keymap.put(new Shortcut(VK_Q, oSSpecificModifier), ActionManager.Action.QUIT);
 		keymap.put(new Shortcut(VK_W, oSSpecificModifier), ActionManager.Action.CLOSE);
 		keymap.put(new Shortcut(VK_T, oSSpecificModifier), ActionManager.Action.TOGGLE_SLOW_MO);
+		keymap.put(new Shortcut(VK_I, oSSpecificModifier), ActionManager.Action.TOGGLE_SHOW_THREADS);
 		keymap.put(new Shortcut(VK_ESCAPE), ActionManager.Action.STOP);
 
 		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
