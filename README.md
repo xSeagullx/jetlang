@@ -17,7 +17,7 @@ cd editor/build/install/editor
 6. __(CMD/Ctrl)+I__ - toggle display of threads in out panel. Active only on the next run.
 7. __Esc__ - stops currently running JetLang program.
 
-Assumptions:
+## Assumptions:
 1. All files are handled in `UTF-8`.
 2. Only one instance of JetLang program can be running at any time. (but multiple highlight tasks can be run in parallel).
 3. `map` and `reduce` are elements of a language itself (and not a functions of standard library)
