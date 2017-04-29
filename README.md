@@ -20,11 +20,12 @@ cd editor/build/install/editor
 Assumptions:
 1. All files are handled in `UTF-8`.
 2. Only one instance of JetLang program can be running at any time. (but multiple highlight tasks can be run in parallel).
-3. `map` and `reduce` are elements of a language (and not a functions of standard library)
-4. All integer operations are performed with `java.lang.Integer`, all floating-point calculations - in `java.lang.Double`.
-5. `1 / 2` will yield `0`, as it's an integer division. `1.0 / 2` or `1 / 2.0` will give `0.5`.
-6. `config.json` shall be valid or non-existent.
-7. Distributive must be started from it's root folder. (just because config file is there). If you run it from IDEA, specify a working directory `editor/src/dist/`.
+3. `map` and `reduce` are elements of a language itself (and not a functions of standard library)
+4. `map` and `reduce` will be executed in parallel if number of their elements is bigger than 1000. It'll use ForkJoin pool with 4 threads in it.
+5. All integer operations are performed with `java.lang.Integer`, all floating-point calculations - in `java.lang.Double`.
+6. `1 / 2` will yield `0`, as it's an integer division. `1.0 / 2` or `1 / 2.0` will give `0.5`.
+7. `config.json` shall be valid or non-existent.
+8. Distributive must be started from it's root folder. (just because config file is there). If you run it from IDEA, specify a working directory `editor/src/dist/`.
 
 # Architecture
 `core` project - jetLang compiler and runtime.

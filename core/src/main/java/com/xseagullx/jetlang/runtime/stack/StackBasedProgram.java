@@ -6,7 +6,7 @@ import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
 
 import java.util.List;
 
-class StackBasedProgram implements Program {
+public class StackBasedProgram implements Program {
 	private final List<Statement> statements;
 
 	StackBasedProgram(List<Statement> statements) {
@@ -20,7 +20,7 @@ class StackBasedProgram implements Program {
 	@Override public void execute(ExecutionContext existingContext) {
 		ForkJoinExecutor forkJoinExecutor = null;
 		try {
-			forkJoinExecutor = new ForkJoinExecutor(100);
+			forkJoinExecutor = new ForkJoinExecutor(ForkJoinExecutor.EXECUTOR_CHUNK_SIZE);
 			ExecutionContext context = existingContext != null ? existingContext : new SimpleExecutionContext(forkJoinExecutor);
 			for (Statement statement : statements)
 				context.exec(statement);

@@ -6,6 +6,7 @@ import com.xseagullx.jetlang.runtime.stack.nodes.LambdaExpression;
 import java.util.List;
 
 public abstract class ParallelExecutor {
+	public static final int EXECUTOR_CHUNK_SIZE = 1000;
 	final int threshold;
 	final int paralleismLevel = 4;
 

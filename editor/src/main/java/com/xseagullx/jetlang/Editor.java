@@ -2,6 +2,7 @@ package com.xseagullx.jetlang;
 
 import com.xseagullx.jetlang.runtime.stack.ExecutionListener;
 import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor;
+import com.xseagullx.jetlang.runtime.stack.ParallelExecutor;
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext;
 import com.xseagullx.jetlang.services.ActionManager;
 import com.xseagullx.jetlang.services.AlreadyRunningException;
@@ -145,7 +146,7 @@ class Editor {
 		try {
 			boolean isSlowMode = editorState.isSlowMode();
 			boolean isShowThreads = editorState.isShowThreads();
-			SimpleExecutionContext context = new SimpleExecutionContext(new ForkJoinExecutor(100));
+			SimpleExecutionContext context = new SimpleExecutionContext(new ForkJoinExecutor(ParallelExecutor.EXECUTOR_CHUNK_SIZE));
 			context.setExecutionListener(new ExecutionListener() {
 				@Override public void onExecute(SimpleExecutionContext context, TokenInformationHolder currentToken) {
 					if (isSlowMode)
