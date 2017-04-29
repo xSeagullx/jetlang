@@ -17,9 +17,11 @@ import java.awt.Dimension;
 public class OutPanel {
 	private final StyledDocument document;
 	private final StyleManager styleManager;
+	private final Dimension preferredSize;
 
-	public OutPanel(StyleManager styleManager) {
+	public OutPanel(StyleManager styleManager, Dimension preferredSize) {
 		this.styleManager = styleManager;
+		this.preferredSize = preferredSize;
 		document = new DefaultStyledDocument();
 	}
 
@@ -29,7 +31,7 @@ public class OutPanel {
 		editorPane.setEditorKit(new StyledEditorKit());
 		editorPane.setDocument(document);
 		JScrollPane jScrollPane = new JScrollPane(editorPane);
-		jScrollPane.setPreferredSize(new Dimension(1024, 200)); // FIXME externalize
+		jScrollPane.setPreferredSize(preferredSize);
 		return jScrollPane;
 	}
 

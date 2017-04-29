@@ -5,7 +5,7 @@ package com.xseagullx.jetlang.util;
 	FatalException() {
 	}
 
-	FatalException(String message) {
+	public FatalException(String message) {
 		super(message);
 	}
 

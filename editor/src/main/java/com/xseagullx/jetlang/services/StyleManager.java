@@ -13,54 +13,105 @@ import java.awt.Font;
 import java.awt.FontFormatException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @SuppressWarnings("WeakerAccess")
 public class StyleManager {
-	public final MutableAttributeSet main;
-	public final MutableAttributeSet keyword;
-	public final MutableAttributeSet number;
-	public final MutableAttributeSet string;
-	public final MutableAttributeSet error;
+	private static final Logger log = Logger.getLogger(StyleManager.class.getName());
+
+	public final MutableAttributeSet main = new SimpleAttributeSet();
+	public final MutableAttributeSet keyword = new SimpleAttributeSet();
+	public final MutableAttributeSet number = new SimpleAttributeSet();
+	public final MutableAttributeSet string = new SimpleAttributeSet();
+	public final MutableAttributeSet error = new SimpleAttributeSet();
+
 	public final Color caretColor;
 	public final Color backgroundColor;
 	public final Color foregroundColor;
 
-	public StyleManager() {
-		Font font;
+	public static StyleManager create(StylesBean styles) {
+		Color backgroundColor = Color.decode(styles.backgroundColor);
+		Color foregroundColor = Color.decode(styles.foregroundColor);
+		Color caretColor = Color.decode(styles.caretColor);
+
+		return configure(styles, new StyleManager(backgroundColor, foregroundColor, caretColor));
+	}
+
+	private static StyleManager configure(StylesBean styles, StyleManager styleManager) {
+		initUI(styleManager.backgroundColor);
+		styleManager.configureStyles(styles);
+		return styleManager;
+	}
+
+	protected StyleManager(Color backgroundColor, Color foregroundColor, Color caretColor) {
+		this.backgroundColor = backgroundColor;
+		this.foregroundColor = foregroundColor;
+		this.caretColor = caretColor;
+	}
+
+	private static void initUI(Color backgroundColor) {
+		UIDefaults uiDefaults = UIManager.getDefaults();
+		uiDefaults.put("EditorPane.background", new ColorUIResource(backgroundColor));
+		uiDefaults.put("EditorPane.inactiveBackground", new ColorUIResource(backgroundColor));
+	}
+
+	private Font getDefaultFont() {
 		try {
 			InputStream fontStream = this.getClass().getResourceAsStream("/fonts/Inconsolata-LGC.ttf");
-			font = Font.createFont(Font.TRUETYPE_FONT, fontStream);
+			return Font.createFont(Font.TRUETYPE_FONT, fontStream);
 		}
 		catch (FontFormatException | IOException e) {
 			throw new FatalException("Can't find any suitable font", e);
 		}
+	}
 
-		backgroundColor = Color.decode("#2B2B2B");
-		foregroundColor = Color.decode("#A9B7C6");
+	private void configureStyles(StylesBean styles) {
+		configureStyle("main", styles.main);
+		configureStyle("number", styles.number);
+		configureStyle("string", styles.string);
+		configureStyle("keyword", styles.keyword);
+		configureStyle("error", styles.error);
+	}
 
-		UIDefaults defs = UIManager.getDefaults();
-		defs.put("EditorPane.background", new ColorUIResource(backgroundColor));
-		defs.put("EditorPane.inactiveBackground", new ColorUIResource(backgroundColor));
+	void configureStyle(String name, StyleBean styleBean) {
+		MutableAttributeSet attributeSet = getByName(name);
+		if (styleBean == null)
+			throw new FatalException("No config found for style: " + name);
 
-		main = new SimpleAttributeSet();
-		StyleConstants.setFontFamily(main, font.getFamily());
-		StyleConstants.setForeground(main, foregroundColor);
-		StyleConstants.setFontSize(main, 14);
+		ifDefined(name + ":" + "parent", styleBean.parent, it -> attributeSet.addAttributes(getByName(it)));
+		ifDefined(name + ":" + "fontFamily", styleBean.fontFamily, it -> StyleConstants.setFontFamily(attributeSet, getFontFamily(it)));
+		ifDefined(name + ":" + "foreground", styleBean.foreground, it -> StyleConstants.setForeground(attributeSet, Color.decode(it)));
+		ifDefined(name + ":" + "background", styleBean.background, it -> StyleConstants.setBackground(attributeSet, Color.decode(it)));
+		ifDefined(name + ":" + "fontSize", styleBean.fontSize, it -> StyleConstants.setFontSize(attributeSet, it));
+		ifDefined(name + ":" + "bold", styleBean.bold, it -> StyleConstants.setBold(attributeSet, it));
+		ifDefined(name + ":" + "underline", styleBean.underline, it -> StyleConstants.setUnderline(attributeSet, it));
+	}
 
-		keyword = new SimpleAttributeSet(main);
-		StyleConstants.setForeground(keyword, Color.decode("#CC7832"));
-		StyleConstants.setBold(keyword, true);
+	private String getFontFamily(String it) {
+		return "default".equals(it) ? getDefaultFont().getFamily() : it;
+	}
 
-		number = new SimpleAttributeSet(main);
-		StyleConstants.setForeground(number, Color.decode("#6897BB"));
+	MutableAttributeSet getByName(String name) {
+		switch (name) {
+		case "main": return main;
+		case "number": return number;
+		case "keyword": return keyword;
+		case "string": return string;
+		case "error": return error;
+		default: throw new FatalException("Wrong style name requested: " + name);
+		}
+	}
 
-		string = new SimpleAttributeSet(main);
-		StyleConstants.setForeground(string, Color.decode("#6A8759"));
-
-		error = new SimpleAttributeSet(main);
-		StyleConstants.setForeground(error, Color.decode("#BC3F3C"));
-		StyleConstants.setUnderline(error, true);
-
-		caretColor = Color.decode("#bbbbbb");
+	private <T> void ifDefined(String propertyName, T t, Consumer<T> consumer) {
+		if (t != null) {
+			try {
+				consumer.accept(t);
+			}
+			catch (Exception e) {
+				log.log(Level.WARNING, "Exception while setting " + propertyName, e);
+			}
+		}
 	}
 }

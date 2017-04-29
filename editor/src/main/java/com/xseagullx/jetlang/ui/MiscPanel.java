@@ -18,16 +18,18 @@ import java.util.stream.Collectors;
 public class MiscPanel {
 	private final EditorState editorState;
 	private final TaskManager taskManager;
+	private final Dimension preferredSize;
 
-	public MiscPanel(EditorState editorState, TaskManager taskManager) {
+	public MiscPanel(EditorState editorState, TaskManager taskManager, Dimension preferredSize) {
 		this.editorState = editorState;
 		this.taskManager = taskManager;
+		this.preferredSize = preferredSize;
 	}
 
 	public Container createComponent() {
 		JPanel miscPanel = new JPanel(new BorderLayout());
 		JPanel lowerPanel = new JPanel(new BorderLayout());
-		lowerPanel.setPreferredSize(new Dimension(1024, 20));
+		lowerPanel.setPreferredSize(preferredSize);
 		lowerPanel.add(createCaretPositionLable(lowerPanel), BorderLayout.EAST);
 
 		JProgressBar progressBar = new JProgressBar();

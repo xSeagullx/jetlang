@@ -36,13 +36,15 @@ import java.util.stream.Collectors;
 /** UI component responsible for showing code and applying highlighting results */
 public class EditPanel {
 	private final StyleManager styleManager;
+	private final Dimension preferredSize;
 	private final StyledDocument document;
 	private BiConsumer<Integer, Integer> caretPositionListener;
 	private Collection<ParseError> errors;
 	private CaretListener caretListener;
 
-	public EditPanel(StyleManager styleManager) {
+	public EditPanel(StyleManager styleManager, Dimension preferredSize) {
 		this.styleManager = styleManager;
+		this.preferredSize = preferredSize;
 		document = new DefaultStyledDocument();
 	}
 
@@ -65,7 +67,7 @@ public class EditPanel {
 		};
 		editorPane.addCaretListener(caretListener);
 		JScrollPane jScrollPane = new JScrollPane(editorPane);
-		jScrollPane.setPreferredSize(new Dimension(1024, 768));
+		jScrollPane.setPreferredSize(preferredSize);
 		return jScrollPane;
 	}
 

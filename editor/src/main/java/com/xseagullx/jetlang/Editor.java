@@ -5,6 +5,7 @@ import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor;
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext;
 import com.xseagullx.jetlang.services.ActionManager;
 import com.xseagullx.jetlang.services.AlreadyRunningException;
+import com.xseagullx.jetlang.services.ConfigService;
 import com.xseagullx.jetlang.services.HighlightTask;
 import com.xseagullx.jetlang.services.HighlightingService;
 import com.xseagullx.jetlang.services.Keymap;
@@ -25,6 +26,7 @@ import javax.swing.WindowConstants;
 import javax.swing.text.AttributeSet;
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.FontFormatException;
 import java.io.File;
 import java.io.IOException;
@@ -35,9 +37,8 @@ class Editor {
 	private static final Logger log = Logger.getLogger(Editor.class.getName());
 	private static final int SLOW_MO_DELAY_MS = 100;
 
-	// TODO Парсинг конфига из JSON
-
-	private final StyleManager styleManager = new StyleManager();
+	private final ConfigService configService = ConfigService.create(new File("config.json"));
+	private final StyleManager styleManager = StyleManager.create(configService.config.styles);
 	private final ActionManager actionManager = new ActionManager();
 	private final TaskManager taskManager = new TaskManager();
 	private final RunService runService = new RunService(taskManager);
@@ -50,9 +51,12 @@ class Editor {
 	private final MiscPanel miscPanel;
 
 	Editor() throws IOException, FontFormatException {
-		outputPanel = new OutPanel(styleManager);
-		miscPanel = new MiscPanel(editorState, taskManager);
-		editPanel = new EditPanel(styleManager);
+		Dimension editPanelSize = new Dimension(configService.config.width, Math.round(configService.config.height * 0.6f));
+		Dimension miscPanelSize = new Dimension(configService.config.width, 20);
+		Dimension outPanelSize = new Dimension(configService.config.width, configService.config.height - editPanelSize.height - miscPanelSize.height);
+		outputPanel = new OutPanel(styleManager, outPanelSize);
+		miscPanel = new MiscPanel(editorState, taskManager, miscPanelSize);
+		editPanel = new EditPanel(styleManager, editPanelSize);
 		editPanel.onChange(this::highlight);
 		editPanel.setCaretPositionListener((line, col) -> {
 			editorState.setLineNo(line);
@@ -62,6 +66,11 @@ class Editor {
 		JFrame frame = createFrame();
 		Keymap.register(actionManager);
 		FileManagingComponent fileComponent = new FileManagingComponent(this::open, editorState);
+		bindTitleAndState(frame);
+		regiterActions(frame, fileComponent);
+	}
+
+	private void bindTitleAndState(JFrame frame) {
 		editorState.subscribe(() -> {
 			File file = editorState.getFile();
 			String title = file != null ? "File: " + file.getAbsolutePath() : "New file";
@@ -70,7 +79,9 @@ class Editor {
 			frame.setTitle(title);
 			}
 		);
+	}
 
+	private void regiterActions(JFrame frame, FileManagingComponent fileComponent) {
 		actionManager.register(ActionManager.Action.RUN, (action) -> runProgram());
 		actionManager.register(ActionManager.Action.TOGGLE_SLOW_MO, (action) -> editorState.setSlowMode(!editorState.isSlowMode()));
 		actionManager.register(ActionManager.Action.STOP, (action) -> stopProgram());

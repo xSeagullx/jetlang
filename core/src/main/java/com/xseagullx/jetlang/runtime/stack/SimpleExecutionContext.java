@@ -35,7 +35,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 		executionOutcome = new CompletableFuture<>();
 
 		TokenInformationHolder tokenInformationHolder = new TokenInformationHolder();
-		tokenInformationHolder.setTokenInfo(Thread.currentThread().getName(), 1, 1);
+		tokenInformationHolder.setTokenInfo("main", 1, 1);
 		push(tokenInformationHolder);
 	}
 

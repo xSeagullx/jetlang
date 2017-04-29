@@ -18,6 +18,10 @@ cd editor/build/install/editor
 Assumptions:
 1. All files are handled in `UTF-8`.
 2. Only one instance of JetLang program can be running at any time. (but multiple highlight tasks can be run in parallel).
+3. `map` and `reduce` are elements of a language (and not a functions of standard library)
+4. All integer operations are performed with `java.lang.Integer`, all floating-point calculations - in `java.lang.Double`.
+5. `1 / 2` will yield `0`, as it's an integer division. `1.0 / 2` or `1 / 2.0` will give `0.5`.
+6. `config.json` shall be valid or non-existent.
 
 # Architecture
 `core` project - jetLang compiler and runtime.
