@@ -24,7 +24,7 @@ public abstract class Compiler {
 			return new CompilationResult(errors);
 	}
 
-	protected abstract CompilationResult doParse(JetLangParser.ProgramContext programm);
+	protected abstract CompilationResult doParse(JetLangParser.ProgramContext program);
 
 	public static JetLangLexer getJetLangLexer(String text, List<ParseError> errors) {
 		JetLangLexer lexer;
@@ -47,7 +47,7 @@ public abstract class Compiler {
 		return lexer;
 	}
 
-	private static JetLangParser getJetLangParser(JetLangLexer lexer, List<ParseError> errors) {
+	public static JetLangParser getJetLangParser(JetLangLexer lexer, List<ParseError> errors) {
 		JetLangParser parser = new JetLangParser(new CommonTokenStream(lexer));
 		parser.removeErrorListeners();
 		if (errors != null) {
