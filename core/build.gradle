@@ -4,7 +4,7 @@ apply plugin: 'application'
 dependencies {
 	antlr 'org.antlr:antlr4:4.7'
 	compile 'org.antlr:antlr4-runtime:4.7'
-	compile 'asm:asm:3.3.1'
+	compile 'org.ow2.asm:asm:5.2'
 }
 
 sourceSets { main { java { srcDir "$buildDir/generated-src/main/java" } } }

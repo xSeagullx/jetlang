@@ -1,6 +1,7 @@
 package com.xseagullx.jetlang.runtime.jvm
 
 import com.xseagullx.jetlang.ExecutionContext
+import com.xseagullx.jetlang.Sequence
 import org.junit.Rule
 import org.junit.rules.TestName
 import spock.lang.Specification
@@ -67,6 +68,32 @@ class ASMTest extends Specification {
 		"2 * 3 + 1 / 4.0"   || 6.25         | Double
 		"2 * (3 + 1) / 4"   || 2            | Integer
 		"+1 + +2"           || 3            | Integer
+	}
+
+	def "ranges"() {
+		setup:
+		def executionContext = Mock(ExecutionContext)
+
+		when:
+		exec("out " + "{1, 3}", executionContext)
+
+		then:
+		1 * executionContext.print(_) >> { args ->
+			assert args[0] == new Sequence(1, 3)
+		}
+	}
+
+	def "maps"() {
+		setup:
+		def executionContext = Mock(ExecutionContext)
+
+		when:
+		exec("out " + "map({1, 3}, i -> i * 2)", executionContext)
+
+		then:
+		1 * executionContext.print(_) >> { args ->
+			assert args[0] == new Sequence([2, 4, 6])
+		}
 	}
 
 	Class<?> loadClass(byte[] bytes) {

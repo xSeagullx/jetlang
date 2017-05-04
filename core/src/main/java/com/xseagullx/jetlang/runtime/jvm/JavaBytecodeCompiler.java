@@ -4,23 +4,35 @@ import com.sun.org.apache.xalan.internal.extensions.ExpressionContext;
 import com.xseagullx.jetlang.CompilationResult;
 import com.xseagullx.jetlang.Compiler;
 import com.xseagullx.jetlang.JetLangParser;
+import com.xseagullx.jetlang.Sequence;
 import com.xseagullx.jetlang.runtime.jvm.ProgramBase;
 import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableExpression;
 import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+class LambdaDefinition {
+	List<String> variables;
+	JetLangParser.ExprContext expression;
+	String name;
+}
+
 class JVMCompilationContext {
 	Map<String, Integer> localVariables = new HashMap<>();
-	Queue<Map.Entry<String, ExpressionContext>> lambdas = new ArrayDeque<>();
+	Queue<LambdaDefinition> lambdas = new ArrayDeque<>();
 	MethodVisitor methodVisitor;
 }
 
@@ -32,17 +44,38 @@ public class JavaBytecodeCompiler extends Compiler {
 
 	byte[] generateClass(JetLangParser.ProgramContext programCtx) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-		classWriter.visit(49, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, "Program", null, asmClassName(ProgramBase.class), null);
+		classWriter.visit(52, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, "Program", null, asmClassName(ProgramBase.class), null);
 		createInitMethod(classWriter);
-		createRunMethod(programCtx, classWriter);
+		JVMCompilationContext jvm = new JVMCompilationContext();
+		createRunMethod(programCtx, classWriter, jvm);
+		while (!jvm.lambdas.isEmpty()) {
+			LambdaDefinition lambdaDefinition = jvm.lambdas.poll();
+			generateLambda(lambdaDefinition, classWriter, jvm);
+		}
 		classWriter.visitEnd();
 		return classWriter.toByteArray();
 	}
 
-	private void createRunMethod(JetLangParser.ProgramContext programCtx, ClassWriter classWriter) {
-		MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PUBLIC, "run", "()V", null, null);
+	private void generateLambda(LambdaDefinition lambdaDefinition, ClassWriter classWriter, JVMCompilationContext jvm) {
+		MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PRIVATE, lambdaDefinition.name, "(Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+		jvm.localVariables.clear();
+		int i = 1;
+		for (String variable : lambdaDefinition.variables) {
+			jvm.localVariables.put(variable, i);
+			i++;
+		}
 
-		JVMCompilationContext jvm = new JVMCompilationContext();
+		jvm.methodVisitor = mv;
+
+		mv.visitCode();
+		generateExpression(lambdaDefinition.expression, jvm);
+		mv.visitInsn(Opcodes.ARETURN);
+		mv.visitMaxs(0, 0);
+		mv.visitEnd();
+	}
+
+	private void createRunMethod(JetLangParser.ProgramContext programCtx, ClassWriter classWriter, JVMCompilationContext jvm) {
+		MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PUBLIC, "run", "()V", null, null);
 		jvm.methodVisitor = mv;
 
 		for (JetLangParser.StmtContext stmtContext : programCtx.stmt()) {
@@ -56,7 +89,7 @@ public class JavaBytecodeCompiler extends Compiler {
 				JetLangParser.OutExprContext outExprContext = (JetLangParser.OutExprContext)stmtContext;
 				mv.visitVarInsn(Opcodes.ALOAD, 0); // this
 				generateExpression(outExprContext.expr(), jvm);
-				mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "out", "(Ljava/lang/Object;)V");
+				mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "out", "(Ljava/lang/Object;)V", false);
 			}
 		}
 
@@ -88,7 +121,7 @@ public class JavaBytecodeCompiler extends Compiler {
 
 	private void generateOperationCall(BinaryExpression.OperationType operationType, JVMCompilationContext jvm) {
 		String name = operationType.name().toLowerCase();
-		jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", name, "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+		jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", name, "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
 	}
 
 	private void generateExpression(JetLangParser.ExprContext expr, JVMCompilationContext jvm) {
@@ -102,6 +135,10 @@ public class JavaBytecodeCompiler extends Compiler {
 			generateExpression((JetLangParser.RangeExprContext)expr, jvm);
 		else if (expr instanceof JetLangParser.ParenthesisExprContext)
 			generateExpression(((JetLangParser.ParenthesisExprContext)expr).expr(), jvm);
+		else if (expr instanceof JetLangParser.MapExprContext)
+			generateExpression((JetLangParser.MapExprContext)expr, jvm);
+		else if (expr instanceof JetLangParser.ReduceExprContext)
+			generateExpression((JetLangParser.ReduceExprContext)expr, jvm);
 	}
 
 	private void generateExpression(JetLangParser.IdentifierExprContext expr, JVMCompilationContext jvm) {
@@ -111,7 +148,32 @@ public class JavaBytecodeCompiler extends Compiler {
 	}
 
 	private void generateExpression(JetLangParser.RangeExprContext expr, JVMCompilationContext jvm) {
-//		expr.identifier()
+		jvm.methodVisitor.visitVarInsn(Opcodes.ALOAD, 0); // this
+		generateExpression(expr.range().expr(0), jvm);
+		generateExpression(expr.range().expr(1), jvm);
+		jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "newRange", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
+	}
+
+	private void generateExpression(JetLangParser.MapExprContext expr, JVMCompilationContext jvm) {
+		LambdaDefinition lambdaDefinition = new LambdaDefinition();
+		lambdaDefinition.expression = expr.map().expr(1);
+		lambdaDefinition.variables = Collections.singletonList(expr.map().identifier().IDENTIFIER().getText());
+		jvm.lambdas.add(lambdaDefinition);
+		lambdaDefinition.name = "lambda_" + expr.map().identifier().start.getLine() + "_" + expr.map().identifier().start.getCharPositionInLine();
+
+		jvm.methodVisitor.visitVarInsn(Opcodes.ALOAD, 0); // this
+		generateExpression(expr.map().expr(0), jvm); // Range
+		// lambdaRef
+		jvm.methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+		jvm.methodVisitor.visitInvokeDynamicInsn("apply", "(LProgram;)Ljava/util/function/Function;",
+			new Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory",
+				"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
+			Type.getType("(Ljava/lang/Object;)Ljava/lang/Object;"),
+			new Handle(Opcodes.H_INVOKESPECIAL, "Program", lambdaDefinition.name, "(Ljava/lang/Object;)Ljava/lang/Object;", false),
+			Type.getType("(Ljava/lang/Object;)Ljava/lang/Object;")
+		);
+
+		jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "map", "(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;", false);
 	}
 
 	private void generateExpression(JetLangParser.NumberExprContext expr, JVMCompilationContext jvm) {
@@ -119,12 +181,12 @@ public class JavaBytecodeCompiler extends Compiler {
 		if (numberCtx.INTEGER() != null) {
 			Integer value = Integer.valueOf(numberCtx.INTEGER().getText());
 			jvm.methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
-			jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, asmClassName(Integer.class), "valueOf", "(I)Ljava/lang/Integer;");
+			jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, asmClassName(Integer.class), "valueOf", "(I)Ljava/lang/Integer;", false);
 		}
 		else if (numberCtx.REAL_NUMBER() != null) {
 			Double value = Double.valueOf(numberCtx.REAL_NUMBER().getText());
 			jvm.methodVisitor.visitLdcInsn(value);
-			jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, asmClassName(Double.class), "valueOf", "(D)Ljava/lang/Double;");
+			jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, asmClassName(Double.class), "valueOf", "(D)Ljava/lang/Double;", false);
 		}
 		else {
 			throw new ThisShouldNeverHappenException("");
@@ -134,10 +196,7 @@ public class JavaBytecodeCompiler extends Compiler {
 	private void createInitMethod(ClassWriter classWriter) {
 		MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
 		mv.visitVarInsn(Opcodes.ALOAD, 0);
-		mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
-			asmClassName(ProgramBase.class),
-			"<init>",
-			"()V");
+		mv.visitMethodInsn(Opcodes.INVOKESPECIAL, asmClassName(ProgramBase.class), "<init>", "()V", false);
 		mv.visitInsn(Opcodes.RETURN);
 		mv.visitMaxs(1, 1);
 		mv.visitEnd();
