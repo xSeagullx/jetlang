@@ -3,6 +3,8 @@ package com.xseagullx.jetlang.runtime.jvm;
 import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.Program;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.SecureClassLoader;
 
 class JetLangClassLoader extends SecureClassLoader {
@@ -29,11 +31,24 @@ public class JvmProgram implements Program {
 		try {
 			ProgramBase programBase = loadClass().newInstance();
 			programBase.context = existingContext;
-			programBase.run();
+			try {
+				programBase.run();
+			}
+			catch (Throwable t) {
+				printExceptionToContext(existingContext, t);
+				throw new RuntimeException("Error executing program", t);
+			}
 		}
 		catch (InstantiationException | IllegalAccessException e) {
+			printExceptionToContext(existingContext, e);
 			throw new RuntimeException("Error instantiating program", e);
 		}
+	}
+
+	private void printExceptionToContext(ExecutionContext context, Throwable t) {
+		StringWriter writer = new StringWriter();
+		t.printStackTrace(new PrintWriter(writer));
+		context.error(writer.toString());
 	}
 
 	Class<ProgramBase> loadClass() {

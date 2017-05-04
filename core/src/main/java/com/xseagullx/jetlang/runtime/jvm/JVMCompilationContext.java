@@ -6,13 +6,13 @@ import com.xseagullx.jetlang.runtime.CSTUtils;
 import com.xseagullx.jetlang.runtime.CompilationVisitor;
 import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression;
 import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
-import jdk.internal.org.objectweb.asm.Opcodes;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.util.ArrayDeque;

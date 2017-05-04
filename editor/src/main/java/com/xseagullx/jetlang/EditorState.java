@@ -12,6 +12,7 @@ public class EditorState {
 	private final List<Runnable> subscriptions = new ArrayList<>();
 	private boolean slowMode;
 	private boolean showThreads;
+	private boolean useByteCodeCompiler;
 
 	public void subscribe(Runnable r) {
 		subscriptions.add(r);
@@ -63,6 +64,15 @@ public class EditorState {
 
 	void setShowThreads(boolean showThreads) {
 		this.showThreads = showThreads;
+		notifySubscriptions();
+	}
+
+	boolean isUseByteCodeCompiler() {
+		return useByteCodeCompiler;
+	}
+
+	void setUseByteCodeCompiler(boolean useByteCodeCompiler) {
+		this.useByteCodeCompiler = useByteCodeCompiler;
 		notifySubscriptions();
 	}
 }
