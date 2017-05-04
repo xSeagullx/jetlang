@@ -3,7 +3,7 @@ package com.xseagullx.jetlang.services;
 import com.xseagullx.jetlang.CompilationResult;
 import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.ParseError;
-import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler;
+import com.xseagullx.jetlang.runtime.jvm.JavaBytecodeCompiler;
 
 public class RunTask extends Task<Void> {
 	private DocumentSnapshot documentSnapshot;
@@ -17,7 +17,7 @@ public class RunTask extends Task<Void> {
 	@Override public Void call() {
 		try {
 			context.print("Building...");
-			CompilationResult compilationResult = new StackMachineCompiler().parse(documentSnapshot.text);
+			CompilationResult compilationResult = new JavaBytecodeCompiler().parse(documentSnapshot.text);
 			if (compilationResult.hasErrors()) {
 				for (ParseError it : compilationResult.errors)
 					context.error(it.toString());

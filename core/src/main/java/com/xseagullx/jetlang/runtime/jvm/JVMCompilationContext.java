@@ -23,20 +23,19 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
-class JVMCompilationContext extends CompilationVisitor {
+class JVMCompilationContext extends CompilationVisitor<Void> {
 	static class LambdaDefinition {
 		List<String> variables;
 		JetLangParser.ExprContext expression;
 		String name;
 	}
 
-	List<ParseError> errors;
 	private final Map<String, Integer> localVariables = new HashMap<>();
 	private final Queue<LambdaDefinition> lambdas = new ArrayDeque<>();
 	private MethodVisitor methodVisitor;
-	final ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+	private final ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
-	@Override public void visit(JetLangParser.ProgramContext ctx) {
+	@Override public JvmProgram visit(JetLangParser.ProgramContext ctx) {
 		classWriter.visit(52, Opcodes.ACC_PUBLIC + Opcodes.ACC_SUPER, "Program", null, Type.getInternalName(ProgramBase.class), null);
 		createInitMethod(classWriter);
 		createRunMethod(ctx);
@@ -45,16 +44,18 @@ class JVMCompilationContext extends CompilationVisitor {
 			generateLambda(lambdaDefinition);
 		}
 		classWriter.visitEnd();
+		return new JvmProgram(classWriter.toByteArray());
 	}
 
-	@Override public void visit(JetLangParser.BinaryOpExprContext ctx) {
+	@Override public Void visit(JetLangParser.BinaryOpExprContext ctx) {
 		pushThis();
 		visit(ctx.expr(0));
 		visit(ctx.expr(1));
 		generateOperationCall(CSTUtils.getOperationType(ctx));
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.NumberExprContext ctx) {
+	@Override public Void visit(JetLangParser.NumberExprContext ctx) {
 		JetLangParser.NumberContext numberCtx = ctx.number();
 		Number number = CSTUtils.getNumber(numberCtx);
 		if (number instanceof Integer) {
@@ -68,24 +69,27 @@ class JVMCompilationContext extends CompilationVisitor {
 		else {
 			errors.add(new ParseError(ctx.start.getLine(), ctx.start.getCharPositionInLine() + 1, ctx.start.getStartIndex(), ctx.stop.getStopIndex(), "NumberFormatException"));
 		}
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.IdentifierExprContext ctx) {
+	@Override public Void visit(JetLangParser.IdentifierExprContext ctx) {
 		String name = ctx.identifier().IDENTIFIER().getText();
 		Integer pos = localVariables.get(name);
 		if (pos == null)
 			throw new RuntimeException("Compilation exception. Undeclared variable.");
 		methodVisitor.visitVarInsn(Opcodes.ALOAD, pos);
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.RangeExprContext ctx) {
+	@Override public Void visit(JetLangParser.RangeExprContext ctx) {
 		pushThis();
 		visit(ctx.range().expr(0));
 		visit(ctx.range().expr(1));
 		invokeBase("newRange", Object.class, Object.class);
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.MapExprContext ctx) {
+	@Override public Void visit(JetLangParser.MapExprContext ctx) {
 		LambdaDefinition lambdaDefinition = createLambdaDefinition(ctx.map().expr(1), Collections.singletonList(ctx.map().identifier().IDENTIFIER()));
 
 		pushThis();
@@ -101,9 +105,10 @@ class JVMCompilationContext extends CompilationVisitor {
 		);
 
 		methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "map", "(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;", false);
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.ReduceExprContext ctx) {
+	@Override public Void visit(JetLangParser.ReduceExprContext ctx) {
 		JetLangParser.ReduceContext reduce = ctx.reduce();
 		LambdaDefinition lambdaDefinition = createLambdaDefinition(reduce.expr(2), reduce.IDENTIFIER());
 
@@ -120,28 +125,31 @@ class JVMCompilationContext extends CompilationVisitor {
 			Type.getType("(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
 		);
 		methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "reduce", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;", false);
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.DeclarationContext ctx) {
+	@Override public Void visit(JetLangParser.DeclarationContext ctx) {
 		String name = ctx.identifier().IDENTIFIER().getText();
 		visit(ctx.expr());
 		int pos = localVariables.size() + 1;
 		methodVisitor.visitVarInsn(Opcodes.ASTORE, pos);
 		localVariables.put(name, pos);
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.OutExprContext ctx) {
+	@Override public Void visit(JetLangParser.OutExprContext ctx) {
 		pushThis();
 		visit(ctx.expr());
 		invokeBase("out", Object.class);
+		return null;
 	}
 
-	@Override public void visit(JetLangParser.PrintExprContext ctx) {
-		String text = ctx.STRING().getText();
-		text = "".equals(text) ? "" : text.substring(1, text.length() - 1);
+	@Override public Void visit(JetLangParser.PrintExprContext ctx) {
+		String text = CSTUtils.getString(ctx.STRING());
 		pushThis();
 		methodVisitor.visitLdcInsn(text);
 		invokeBase("out", Object.class);
+		return null;
 	}
 
 	// Utility methods

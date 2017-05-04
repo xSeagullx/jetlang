@@ -1,50 +1,64 @@
 package com.xseagullx.jetlang.runtime;
 
 import com.xseagullx.jetlang.JetLangParser;
+import com.xseagullx.jetlang.ParseError;
+import com.xseagullx.jetlang.Program;
+import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 
-public abstract class CompilationVisitor {
-	public abstract void visit(JetLangParser.ProgramContext ctx);
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class CompilationVisitor<T> {
+	protected List<ParseError> errors = new ArrayList<>();
+
+	public abstract Program visit(JetLangParser.ProgramContext ctx);
 
 	// Expressions
-	public void visit(JetLangParser.ExprContext expr) {
+	public T visit(JetLangParser.ExprContext expr) {
 		if (expr instanceof JetLangParser.BinaryOpExprContext)
-			visit((JetLangParser.BinaryOpExprContext)expr);
+			return visit((JetLangParser.BinaryOpExprContext)expr);
 		else if (expr instanceof JetLangParser.NumberExprContext)
-			visit((JetLangParser.NumberExprContext)expr);
+			return visit((JetLangParser.NumberExprContext)expr);
 		else if (expr instanceof JetLangParser.IdentifierExprContext)
-			visit((JetLangParser.IdentifierExprContext)expr);
+			return visit((JetLangParser.IdentifierExprContext)expr);
 		else if (expr instanceof JetLangParser.RangeExprContext)
-			visit((JetLangParser.RangeExprContext)expr);
+			return visit((JetLangParser.RangeExprContext)expr);
 		else if (expr instanceof JetLangParser.ParenthesisExprContext)
-			visit((JetLangParser.ParenthesisExprContext)expr);
+			return visit((JetLangParser.ParenthesisExprContext)expr);
 		else if (expr instanceof JetLangParser.MapExprContext)
-			visit((JetLangParser.MapExprContext)expr);
+			return visit((JetLangParser.MapExprContext)expr);
 		else if (expr instanceof JetLangParser.ReduceExprContext)
-			visit((JetLangParser.ReduceExprContext)expr);
+			return visit((JetLangParser.ReduceExprContext)expr);
+		throw new ThisShouldNeverHappenException("Invalid expression: " + expr);
 	}
 
-	public void visit(JetLangParser.ParenthesisExprContext ctx) {
-		visit(ctx.expr());
+	public T visit(JetLangParser.ParenthesisExprContext ctx) {
+		return visit(ctx.expr());
 	}
 
-	public abstract void visit(JetLangParser.BinaryOpExprContext ctx);
-	public abstract void visit(JetLangParser.NumberExprContext ctx);
-	public abstract void visit(JetLangParser.IdentifierExprContext ctx);
-	public abstract void visit(JetLangParser.RangeExprContext ctx);
-	public abstract void visit(JetLangParser.MapExprContext ctx);
-	public abstract void visit(JetLangParser.ReduceExprContext ctx);
+	public abstract T visit(JetLangParser.BinaryOpExprContext ctx);
+	public abstract T visit(JetLangParser.NumberExprContext ctx);
+	public abstract T visit(JetLangParser.IdentifierExprContext ctx);
+	public abstract T visit(JetLangParser.RangeExprContext ctx);
+	public abstract T visit(JetLangParser.MapExprContext ctx);
+	public abstract T visit(JetLangParser.ReduceExprContext ctx);
 
 	// Statements
-	public void visit(JetLangParser.StmtContext stmt) {
+	public T visit(JetLangParser.StmtContext stmt) {
 		if (stmt instanceof JetLangParser.DeclarationContext)
-			visit((JetLangParser.DeclarationContext)stmt);
+			return visit((JetLangParser.DeclarationContext)stmt);
 		else if (stmt instanceof JetLangParser.OutExprContext)
-			visit((JetLangParser.OutExprContext)stmt);
+			return visit((JetLangParser.OutExprContext)stmt);
 		else if (stmt instanceof JetLangParser.PrintExprContext)
-			visit((JetLangParser.PrintExprContext)stmt);
+			return visit((JetLangParser.PrintExprContext)stmt);
+		throw new ThisShouldNeverHappenException("Invalid statement: " + stmt);
 	}
 
-	public abstract void visit(JetLangParser.DeclarationContext ctx);
-	public abstract void visit(JetLangParser.OutExprContext ctx);
-	public abstract void visit(JetLangParser.PrintExprContext ctx);
+	public abstract T visit(JetLangParser.DeclarationContext ctx);
+	public abstract T visit(JetLangParser.OutExprContext ctx);
+	public abstract T visit(JetLangParser.PrintExprContext ctx);
+
+	public List<ParseError> getErrors() {
+		return errors;
+	}
 }

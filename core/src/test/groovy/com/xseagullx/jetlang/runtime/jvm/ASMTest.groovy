@@ -142,8 +142,8 @@ class ASMTest extends Specification {
 		def classFileBytes = (jvmProgram as JvmProgram).bytes
 		def name = name.methodName
 			.replaceAll("\\+", "plus")
-			.replaceAll("\\-", "minus")
-			.replaceAll("\\/", "div")
+			.replaceAll("-", "minus")
+			.replaceAll("/", "div")
 			.replaceAll("\\*", "mul")
 			.replaceAll("\\^", "pow")
 			.replaceAll("==", "equals")
