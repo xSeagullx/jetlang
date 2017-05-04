@@ -15,7 +15,8 @@ cd editor/build/install/editor
 5. __(CMD/Ctrl)+Enter__ - run JetLang program.
 5. __(CMD/Ctrl)+T__ - toggle slow mode (adds 100 ms delay to every step of JetLang program). Active only on the next run.
 6. __(CMD/Ctrl)+I__ - toggle display of threads in out panel. Active only on the next run.
-7. __Esc__ - stops currently running JetLang program.
+7. __(CMD/Ctrl)+J__ - toggle between "stack" or "JVM bytecode" based compiler. Active only on the next run.
+8. __Esc__ - stops currently running JetLang program.
 
 ## Assumptions:
 1. All files are handled in `UTF-8`.
@@ -26,6 +27,7 @@ cd editor/build/install/editor
 6. `1 / 2` will yield `0`, as it's an integer division. `1.0 / 2` or `1 / 2.0` will give `0.5`.
 7. `config.json` shall be valid or non-existent.
 8. Distributive must be started from it's root folder. (just because config file is there). If you run it from IDEA, specify a working directory `editor/src/dist/`.
+9. JVM bytecode compiler is added as a *pure experiment*, and it's not pretending to be complete. Error reporting there is lacking (there are no line numbers, for example). Also there is no parallel execution (although will be easy to add).
 
 # Architecture
 `core` project - jetLang compiler and runtime.
