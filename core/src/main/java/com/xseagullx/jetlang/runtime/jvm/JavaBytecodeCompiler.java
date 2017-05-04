@@ -10,6 +10,8 @@ import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableExpression;
 import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 import jdk.internal.org.objectweb.asm.Opcodes;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
@@ -23,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 class LambdaDefinition {
 	List<String> variables;
@@ -57,7 +60,8 @@ public class JavaBytecodeCompiler extends Compiler {
 	}
 
 	private void generateLambda(LambdaDefinition lambdaDefinition, ClassWriter classWriter, JVMCompilationContext jvm) {
-		MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PRIVATE, lambdaDefinition.name, "(Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+		String args = String.join("", Collections.nCopies(lambdaDefinition.variables.size(),"Ljava/lang/Object;"));
+		MethodVisitor mv = classWriter.visitMethod(Opcodes.ACC_PRIVATE, lambdaDefinition.name, "(" + args + ")Ljava/lang/Object;", null, null);
 		jvm.localVariables.clear();
 		int i = 1;
 		for (String variable : lambdaDefinition.variables) {
@@ -174,6 +178,30 @@ public class JavaBytecodeCompiler extends Compiler {
 		);
 
 		jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "map", "(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;", false);
+	}
+
+	private void generateExpression(JetLangParser.ReduceExprContext expr, JVMCompilationContext jvm) {
+		LambdaDefinition lambdaDefinition = new LambdaDefinition();
+		JetLangParser.ReduceContext reduce = expr.reduce();
+		lambdaDefinition.expression = reduce.expr(2);
+		lambdaDefinition.variables = reduce.IDENTIFIER().stream().map(ParseTree::getText).collect(Collectors.toList());
+		jvm.lambdas.add(lambdaDefinition);
+		Token firstToken = reduce.IDENTIFIER(0).getSymbol();
+		lambdaDefinition.name = "lambda_" + firstToken.getLine() + "_" + firstToken.getCharPositionInLine();
+
+		jvm.methodVisitor.visitVarInsn(Opcodes.ALOAD, 0); // this
+		generateExpression(reduce.expr(0), jvm); // Range
+		generateExpression(reduce.expr(1), jvm); // initial value
+		// lambdaRef
+		jvm.methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+		jvm.methodVisitor.visitInvokeDynamicInsn("apply", "(LProgram;)Ljava/util/function/BiFunction;",
+			new Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory",
+				"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
+			Type.getType("(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"),
+			new Handle(Opcodes.H_INVOKESPECIAL, "Program", lambdaDefinition.name, "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false),
+			Type.getType("(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")
+		);
+		jvm.methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", "reduce", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;", false);
 	}
 
 	private void generateExpression(JetLangParser.NumberExprContext expr, JVMCompilationContext jvm) {

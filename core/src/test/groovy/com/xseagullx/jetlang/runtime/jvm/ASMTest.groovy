@@ -83,7 +83,7 @@ class ASMTest extends Specification {
 		}
 	}
 
-	def "maps"() {
+	def "map"() {
 		setup:
 		def executionContext = Mock(ExecutionContext)
 
@@ -93,6 +93,19 @@ class ASMTest extends Specification {
 		then:
 		1 * executionContext.print(_) >> { args ->
 			assert args[0] == new Sequence([2, 4, 6])
+		}
+	}
+
+	def "reduce"() {
+		setup:
+		def executionContext = Mock(ExecutionContext)
+
+		when:
+		exec("out " + "reduce({1, 3}, 10, i, s -> s + i)", executionContext)
+
+		then:
+		1 * executionContext.print(_) >> { args ->
+			assert args[0] == 10 + 1 + 2 + 3
 		}
 	}
 

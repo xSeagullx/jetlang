@@ -3,6 +3,8 @@ package com.xseagullx.jetlang.runtime.jvm;
 import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.Sequence;
 
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,6 +58,10 @@ public abstract class ProgramBase implements Runnable {
 
 	protected Object map(Object sequence, Function<Object, Object> lambda) {
 		return new Sequence(((Sequence)sequence).list.stream().map(lambda).collect(Collectors.toList()));
+	}
+
+	protected Object reduce(Object sequence, Object initial, BiFunction<Object, Object, Object> lambda) {
+		return ((Sequence)sequence).list.stream().reduce(initial, lambda::apply);
 	}
 
 	private boolean hasDouble(Object a, Object b) {
