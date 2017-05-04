@@ -5,6 +5,7 @@ import com.xseagullx.jetlang.Compiler;
 import com.xseagullx.jetlang.JetLangParser;
 import com.xseagullx.jetlang.ParseError;
 import com.xseagullx.jetlang.TokenInformationHolder;
+import com.xseagullx.jetlang.runtime.CSTUtils;
 import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.ConstExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.Expression;
@@ -19,7 +20,6 @@ import com.xseagullx.jetlang.runtime.stack.nodes.ReduceExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableDeclaration;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableExpression;
-import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -102,21 +102,7 @@ public class StackMachineCompiler extends Compiler {
 
 	private Expression parse(JetLangParser.BinaryOpExprContext expr, List<ParseError> errors) {
 		List<JetLangParser.ExprContext> exprContexts = expr.expr();
-		BinaryExpression.OperationType operationType = null;
-		if (expr.PLUS() != null)
-			operationType = BinaryExpression.OperationType.PLUS;
-		else if (expr.MINUS() != null)
-			operationType = BinaryExpression.OperationType.MINUS;
-		else if (expr.DIV() != null)
-			operationType = BinaryExpression.OperationType.DIV;
-		else if (expr.MUL() != null)
-			operationType = BinaryExpression.OperationType.MUL;
-		else if (expr.POWER() != null)
-			operationType = BinaryExpression.OperationType.POW;
-
-		if (operationType == null)
-			throw new RuntimeException("Unsupported operation " + expr);
-
+		BinaryExpression.OperationType operationType = CSTUtils.getOperationType(expr);
 		BinaryExpression binaryExpression = new BinaryExpression(parse(exprContexts.get(0), errors), parse(exprContexts.get(1), errors), operationType);
 		return addMetadata(binaryExpression, expr);
 	}
@@ -128,20 +114,12 @@ public class StackMachineCompiler extends Compiler {
 
 	private Expression parse(JetLangParser.NumberExprContext expr, List<ParseError> errors) {
 		JetLangParser.NumberContext numberExpr = expr.number();
-		try {
-			Number number;
-			if (numberExpr.INTEGER() != null)
-				number = Integer.valueOf(numberExpr.INTEGER().getText());
-			else if (numberExpr.REAL_NUMBER() != null)
-				number = Double.valueOf(numberExpr.REAL_NUMBER().getText());
-			else
-				throw new ThisShouldNeverHappenException("Can't create constant from " + numberExpr);
+		Number number = CSTUtils.getNumber(numberExpr);
+		if (number != null)
 			return addMetadata(new ConstExpression<>(number), expr);
-		}
-		catch (NumberFormatException e) {
-			errors.add(new ParseError(expr.start.getLine(), expr.start.getCharPositionInLine() + 1, expr.start.getStartIndex(), expr.stop.getStopIndex() + 1, "NumberFormatException"));
-			return addMetadata(new InvalidExpression(e.getMessage()), expr);
-		}
+
+		errors.add(new ParseError(expr.start.getLine(), expr.start.getCharPositionInLine() + 1, expr.start.getStartIndex(), expr.stop.getStopIndex() + 1, "NumberFormatException"));
+		return addMetadata(new InvalidExpression("NumberFormatException"), expr);
 	}
 
 	private <T extends TokenInformationHolder> T addMetadata(T node, ParserRuleContext ctx) {

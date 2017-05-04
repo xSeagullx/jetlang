@@ -5,7 +5,6 @@ import com.xseagullx.jetlang.Sequence
 import org.junit.Rule
 import org.junit.rules.TestName
 import spock.lang.Specification
-import com.xseagullx.jetlang.Compiler
 import spock.lang.Unroll
 
 import java.lang.reflect.Modifier
@@ -13,15 +12,15 @@ import java.lang.reflect.Modifier
 class ASMTest extends Specification {
 	@Rule TestName name = new TestName()
 
-	def "test asm"() {
+	def "asm"() {
 		setup:
 		def executionContext = Mock(ExecutionContext)
-		def programCtx = Compiler.getJetLangParser(Compiler.getJetLangLexer("var a = 512 + 4.2\nout a", []), []).program()
+		def text = "var a = 512 + 4.2\nout a"
 
 		when:
-		def bc = new JavaBytecodeCompiler().generateClass(programCtx)
-		new File("Program.class").bytes = bc
-		Class clazz = loadClass(bc)
+		def jvmProgram = new JavaBytecodeCompiler().parse(text).program as JvmProgram
+		new File("asm.class").bytes = jvmProgram.bytes
+		Class clazz = jvmProgram.loadClass()
 
 		then: "class is generated"
 		clazz.superclass == ProgramBase
@@ -37,6 +36,7 @@ class ASMTest extends Specification {
 		1 * executionContext.print(516.2)
 	}
 
+	@SuppressWarnings("GroovyAssignabilityCheck")
 	@Unroll("Check that #expression == #result")
 	def "operation test"() {
 		setup:
@@ -46,9 +46,9 @@ class ASMTest extends Specification {
 		exec("out " + expression, executionContext)
 
 		then:
-		executionContext.print(_) >> { obj ->
-			assert obj[0].getClass() == resultType
-			assert obj[0] == result
+		1 * executionContext.print(_) >> { args ->
+			assert (args as Object[])[0].getClass() == resultType
+			assert (args as Object[])[0] == result
 		}
 
 		where:
@@ -63,7 +63,7 @@ class ASMTest extends Specification {
 		"1.2 - 4.7"         || -3.5         | Double
 		"-1.2 - 4.7"        || -5.9         | Double
 		"-1.2 + 4.7"        || 3.5          | Double
-		"-1.2 * -7.84"      || -1.2d * -7.84d | Double
+		"-1.2 * -7.84"      || -1.2 * -7.84 | Double
 		"2 * 3 + 1"         || 7            | Integer
 		"2 * 3 + 1 / 4.0"   || 6.25         | Double
 		"2 * (3 + 1) / 4"   || 2            | Integer
@@ -78,8 +78,9 @@ class ASMTest extends Specification {
 		exec("out " + "{1, 3}", executionContext)
 
 		then:
+		//noinspection GroovyAssignabilityCheck
 		1 * executionContext.print(_) >> { args ->
-			assert args[0] == new Sequence(1, 3)
+			assert (args as Object[])[0] == new Sequence(1, 3)
 		}
 	}
 
@@ -91,8 +92,9 @@ class ASMTest extends Specification {
 		exec("out " + "map({1, 3}, i -> i * 2)", executionContext)
 
 		then:
+		//noinspection GroovyAssignabilityCheck
 		1 * executionContext.print(_) >> { args ->
-			assert args[0] == new Sequence([2, 4, 6])
+			assert (args as Object[])[0] == new Sequence([2, 4, 6])
 		}
 	}
 
@@ -101,29 +103,43 @@ class ASMTest extends Specification {
 		def executionContext = Mock(ExecutionContext)
 
 		when:
-		exec("out " + "reduce({1, 3}, 10, i, s -> s + i)", executionContext)
+		exec("out " + "reduce({1, 3}, 10, i s -> s + i)", executionContext)
 
 		then:
+		//noinspection GroovyAssignabilityCheck
 		1 * executionContext.print(_) >> { args ->
-			assert args[0] == 10 + 1 + 2 + 3
+			assert (args as Object[])[0] == 10 + 1 + 2 + 3
 		}
 	}
 
-	Class<?> loadClass(byte[] bytes) {
-		Class<?> clazz = null
-		// Class will keep a reference to classloader
-		//noinspection GroovyResultOfObjectAllocationIgnored
-		new URLClassLoader() {
-			{
-				clazz = defineClass(null, bytes, 0, bytes.size())
-			}
+	def "pi"() {
+		setup:
+		def executionContext = Mock(ExecutionContext)
+		def text = """
+		var n = 150
+		var sequence = map({0, n}, i -> (-1)^i / (2 * i + 1))
+		var pi = 4 * reduce(sequence, 0, x y -> x + y)
+		print "pi = "
+		out pi
+		"""
+		def out = []
+
+		when:
+		exec(text, executionContext)
+
+		then:
+		//noinspection GroovyAssignabilityCheck
+		2 * executionContext.print(_) >> { def args ->
+			out << (args as Object[])[0]
 		}
-		clazz
+
+		and:
+		out == ["pi = ", 3.1482150975379377]
 	}
 
 	private void exec(String text, ExecutionContext executionContext) {
-		def programCtx = Compiler.getJetLangParser(Compiler.getJetLangLexer(text, []), []).program()
-		def classFileBytes = new JavaBytecodeCompiler().generateClass(programCtx)
+		def jvmProgram = new JavaBytecodeCompiler().parse(text).program
+		def classFileBytes = (jvmProgram as JvmProgram).bytes
 		def name = name.methodName
 			.replaceAll("\\+", "plus")
 			.replaceAll("\\-", "minus")
@@ -134,9 +150,6 @@ class ASMTest extends Specification {
 			.replaceAll("\\.", "_")
 		new File(name + ".class").bytes = classFileBytes
 
-		Class clazz = loadClass(classFileBytes)
-		def program = (ProgramBase) clazz.newInstance()
-		program.context = executionContext
-		program.run()
+		jvmProgram.execute(executionContext)
 	}
 }
