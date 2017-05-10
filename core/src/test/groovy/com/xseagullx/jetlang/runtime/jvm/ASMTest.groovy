@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier
 
 class ASMTest extends Specification {
 	@Rule TestName name = new TestName()
+	String classFilesDir = System.getProperty("classFilesDir")
 
 	def "asm"() {
 		setup:
@@ -19,7 +20,7 @@ class ASMTest extends Specification {
 
 		when:
 		def jvmProgram = new JavaBytecodeCompiler().parse(text).program as JvmProgram
-		new File("asm.class").bytes = jvmProgram.bytes
+		dumpClassFile(jvmProgram.bytes)
 		Class clazz = jvmProgram.loadClass()
 
 		then: "class is generated"
@@ -140,16 +141,27 @@ class ASMTest extends Specification {
 	private void exec(String text, ExecutionContext executionContext) {
 		def jvmProgram = new JavaBytecodeCompiler().parse(text).program
 		def classFileBytes = (jvmProgram as JvmProgram).bytes
-		def name = name.methodName
-			.replaceAll("\\+", "plus")
-			.replaceAll("-", "minus")
-			.replaceAll("/", "div")
-			.replaceAll("\\*", "mul")
-			.replaceAll("\\^", "pow")
-			.replaceAll("==", "equals")
-			.replaceAll("\\.", "_")
-		new File(name + ".class").bytes = classFileBytes
-
+		dumpClassFile(classFileBytes)
 		jvmProgram.execute(executionContext)
+	}
+
+	private void dumpClassFile(byte[] bytes) {
+		if (!classFilesDir)
+			return
+
+		def baseDir = new File(classFilesDir)
+		baseDir.mkdirs()
+
+		if (baseDir.exists() && baseDir.isDirectory()) {
+			def name = name.methodName
+				.replaceAll("\\+", "plus")
+				.replaceAll("-", "minus")
+				.replaceAll("/", "div")
+				.replaceAll("\\*", "mul")
+				.replaceAll("\\^", "pow")
+				.replaceAll("==", "equals")
+				.replaceAll("\\.", "_")
+			new File(baseDir, name + ".class").bytes = bytes
+		}
 	}
 }
