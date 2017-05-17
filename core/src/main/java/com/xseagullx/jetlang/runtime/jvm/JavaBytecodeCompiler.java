@@ -1,10 +1,10 @@
-package com.xseagullx.jetlang.runtime.stack;
+package com.xseagullx.jetlang.runtime.jvm;
 
 import com.xseagullx.jetlang.JetLangCompiler;
 import com.xseagullx.jetlang.runtime.CompilationVisitor;
 
-public class StackMachineCompiler extends JetLangCompiler {
+public class JavaBytecodeCompiler extends JetLangCompiler {
 	@Override protected CompilationVisitor getVisitor() {
-		return new StackMachineVisitor();
+		return new JVMCompilationContext();
 	}
 }

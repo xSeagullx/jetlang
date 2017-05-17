@@ -79,6 +79,8 @@ class Editor {
 				title += " : slooooow mode ON";
 			if (editorState.isShowThreads())
 				title += " : show threads ON";
+			if (editorState.isUseByteCodeCompiler())
+				title += " : jvm compiler ON";
 			frame.setTitle(title);
 			}
 		);
@@ -88,6 +90,7 @@ class Editor {
 		actionManager.register(ActionManager.Action.RUN, (action) -> runProgram());
 		actionManager.register(ActionManager.Action.TOGGLE_SLOW_MO, (action) -> editorState.setSlowMode(!editorState.isSlowMode()));
 		actionManager.register(ActionManager.Action.TOGGLE_SHOW_THREADS, (action) -> editorState.setShowThreads(!editorState.isShowThreads()));
+		actionManager.register(ActionManager.Action.TOGGLE_USE_BYTECODE_COMPILER, (action) -> editorState.setUseByteCodeCompiler(!editorState.isUseByteCodeCompiler()));
 		actionManager.register(ActionManager.Action.STOP, (action) -> stopProgram());
 		actionManager.register(ActionManager.Action.QUIT, (action) -> frame.dispose());
 		actionManager.register(ActionManager.Action.OPEN, (action) -> fileComponent.openFileDialog(frame));
@@ -172,7 +175,7 @@ class Editor {
 				}
 			});
 
-			runService.execute(editPanel.getDocumentSnapshot(), context);
+			runService.execute(editPanel.getDocumentSnapshot(), context, editorState.isUseByteCodeCompiler());
 			outputPanel.clear();
 			if (isShowThreads)
 				outputPanel.print("Internal thread info will be shown in all printed messages\n", styleManager.main);

@@ -1,10 +1,10 @@
 package com.xseagullx.jetlang.services;
 
 import com.xseagullx.jetlang.CompilationResult;
-import com.xseagullx.jetlang.Compiler;
 import com.xseagullx.jetlang.JetLangLexer;
 import com.xseagullx.jetlang.ParseError;
-import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler;
+import com.xseagullx.jetlang.runtime.CSTUtils;
+import com.xseagullx.jetlang.runtime.jvm.JavaBytecodeCompiler;
 import org.antlr.v4.runtime.Token;
 
 import javax.swing.text.AttributeSet;
@@ -31,7 +31,7 @@ public class HighlightingService {
 	HighlightTask.HighlightingResults highlight(DocumentSnapshot documentSnapshot) {
 		Collection<StyledChunk> results = new ArrayList<>();
 
-		JetLangLexer lexer = Compiler.getJetLangLexer(documentSnapshot.text, null);
+		JetLangLexer lexer = CSTUtils.getJetLangLexer(documentSnapshot.text, null);
 
 		for (Token it : lexer.getAllTokens()) {
 			AttributeSet style;
@@ -53,7 +53,7 @@ public class HighlightingService {
 	}
 
 	private List<ParseError> highlightErrors(DocumentSnapshot documentSnapshot, Collection<StyledChunk> results) {
-		CompilationResult compilationResult = new StackMachineCompiler().parse(documentSnapshot.text);
+		CompilationResult compilationResult = new JavaBytecodeCompiler().parse(documentSnapshot.text);
 		if (!compilationResult.hasErrors())
 			return null;
 

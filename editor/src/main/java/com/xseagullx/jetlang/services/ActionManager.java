@@ -12,6 +12,7 @@ public class ActionManager {
 		QUIT,
 		TOGGLE_SLOW_MO,
 		TOGGLE_SHOW_THREADS,
+		TOGGLE_USE_BYTECODE_COMPILER,
 		STOP,
 		RUN
 	}
