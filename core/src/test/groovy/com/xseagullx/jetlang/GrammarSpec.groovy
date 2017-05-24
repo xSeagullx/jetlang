@@ -16,6 +16,7 @@ import static com.xseagullx.jetlang.JetLangLexer.KW_OUT
 import static com.xseagullx.jetlang.JetLangLexer.KW_PRINT
 import static com.xseagullx.jetlang.JetLangLexer.KW_REDUCE
 import static com.xseagullx.jetlang.JetLangLexer.KW_VAR
+import static com.xseagullx.jetlang.JetLangLexer.MINUS
 import static com.xseagullx.jetlang.JetLangLexer.PLUS
 import static com.xseagullx.jetlang.JetLangLexer.POWER
 import static com.xseagullx.jetlang.JetLangLexer.REAL_NUMBER
@@ -39,12 +40,15 @@ class GrammarSpec extends Specification implements TokenTestUtils {
 		'out 5'                                     || [KW_OUT, INTEGER]
 		'var a = 5'                                 || [KW_VAR, IDENTIFIER, EQUALS, INTEGER]
 		'{1, 2}'                                    || [INTEGER, INTEGER]
+		'-1'                                        || [MINUS, INTEGER]
+		'+1'                                        || [PLUS, INTEGER]
+		'1-1'                                       || [INTEGER, MINUS, INTEGER]
+		'1+1'                                       || [INTEGER, PLUS, INTEGER]
 		'{1, reduce(seq, 0, x y -> x + y) }'        || [INTEGER, KW_REDUCE, IDENTIFIER, INTEGER, IDENTIFIER, IDENTIFIER, ARROW, IDENTIFIER, PLUS, IDENTIFIER]
 		'map({1, n}, i -> (-1)^i / (2 * i + 1))'    || [KW_MAP, ARROW, INTEGER, POWER, IDENTIFIER, DIV]
 		'1.52 + a12_ * _as'                         || [t(REAL_NUMBER, '1.52'), PLUS, t(IDENTIFIER, 'a12_'), t(IDENTIFIER, '_as')]
 		 // FIXME below we actually have a problem, but it'll be a parser error anyway. it parses a INTEGER(12) IDENTIFIER(_)
 //		'12_ * _as'                                 || [t(IDENTIFIER, "12_"), IDENTIFIER]
-		'+12'                                       || [t(INTEGER, "+12")]
 		'+12.56'                                    || [REAL_NUMBER]
 	}
 

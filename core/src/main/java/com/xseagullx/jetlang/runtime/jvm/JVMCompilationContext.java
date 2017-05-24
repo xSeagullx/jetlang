@@ -4,7 +4,7 @@ import com.xseagullx.jetlang.JetLangParser;
 import com.xseagullx.jetlang.ParseError;
 import com.xseagullx.jetlang.runtime.CSTUtils;
 import com.xseagullx.jetlang.runtime.CompilationVisitor;
-import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression;
+import com.xseagullx.jetlang.runtime.stack.nodes.OperationType;
 import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -52,6 +52,18 @@ class JVMCompilationContext extends CompilationVisitor<Void> {
 		visit(ctx.expr(0));
 		visit(ctx.expr(1));
 		generateOperationCall(CSTUtils.getOperationType(ctx));
+		return null;
+	}
+
+	@Override public Void visit(JetLangParser.UnaryOpExpressionContext ctx) {
+		if (ctx.PLUS() != null) // unary plus is a no-op.
+			visit(ctx.expr());
+		else {
+			pushThis();
+			visit(ctx.expr());
+			invokeBase("negate", Object.class);
+		}
+
 		return null;
 	}
 
@@ -198,7 +210,7 @@ class JVMCompilationContext extends CompilationVisitor<Void> {
 		methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
 	}
 
-	private void generateOperationCall(BinaryExpression.OperationType operationType) {
+	private void generateOperationCall(OperationType operationType) {
 		String name = operationType.name().toLowerCase();
 		methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "Program", name, "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
 	}

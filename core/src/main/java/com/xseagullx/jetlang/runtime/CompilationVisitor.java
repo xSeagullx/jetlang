@@ -17,6 +17,8 @@ public abstract class CompilationVisitor<T> {
 	public T visit(JetLangParser.ExprContext expr) {
 		if (expr instanceof JetLangParser.BinaryOpExprContext)
 			return visit((JetLangParser.BinaryOpExprContext)expr);
+		else if (expr instanceof JetLangParser.UnaryOpExpressionContext)
+			return visit((JetLangParser.UnaryOpExpressionContext)expr);
 		else if (expr instanceof JetLangParser.NumberExprContext)
 			return visit((JetLangParser.NumberExprContext)expr);
 		else if (expr instanceof JetLangParser.IdentifierExprContext)
@@ -37,6 +39,7 @@ public abstract class CompilationVisitor<T> {
 	}
 
 	public abstract T visit(JetLangParser.BinaryOpExprContext ctx);
+	public abstract T visit(JetLangParser.UnaryOpExpressionContext ctx);
 	public abstract T visit(JetLangParser.NumberExprContext ctx);
 	public abstract T visit(JetLangParser.IdentifierExprContext ctx);
 	public abstract T visit(JetLangParser.RangeExprContext ctx);

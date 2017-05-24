@@ -61,6 +61,10 @@ class ExecutorSpec extends Specification {
 
 		where:
 		expression          || result       | resultType
+		"+2"                || 2            | Integer
+		"-2"                || -2           | Integer
+		"-2.2"              || -2.2         | Double
+		"+2.2"              || 2.2          | Double
 		"1 + 2"             || 3            | Integer
 		"42 - 12"           || 30           | Integer
 		"4 * 2"             || 8            | Integer
@@ -76,6 +80,10 @@ class ExecutorSpec extends Specification {
 		"2 * 3 + 1 / 4.0"   || 6.25         | Double
 		"2 * (3 + 1) / 4"   || 2            | Integer
 		"+1 + +2"           || 3            | Integer
+		"1+--+2"            || 3            | Integer
+		"1+--+2.1"          || 3.1          | Double
+		"5\nvar a = -a"     || -5           | Integer
+		"5.3\nvar a = -a"   || -5.3         | Double
 	}
 
 	@Unroll("Map #expr to #result")
@@ -161,6 +169,9 @@ class ExecutorSpec extends Specification {
 		"var a = reduce(1, 1, i a -> i)"         || "First argument to reduce shall be a sequence: Found: 1"
 		"var a = b"                              || "Undeclared identifier: 'b'"
 		"var a = 5\nvar b = map({1, 3}, i -> a)" || "Undeclared identifier: 'a'"
+		"var a = +{1, 2}"                        || "unary op: PLUS cannot be applied to [1, 2]"
+		"var a = -{1, 2}"                        || "unary op: MINUS cannot be applied to [1, 2]"
+		"var a = {1, 2}\nvar b = -a"             || "unary op: MINUS cannot be applied to [1, 2]"
 		// We won't check redefinition. It'll be just reassignment. Otherwise variables make almost no sense.
 		//"var a = 5\nvar a = 4"              || "Variable 'a' is already declared"
 	}

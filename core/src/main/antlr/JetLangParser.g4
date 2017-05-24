@@ -15,7 +15,8 @@ map: KW_MAP OPEN_PAR expr COMA identifier ARROW expr CLOSE_PAR ;
 reduce : KW_REDUCE OPEN_PAR expr COMA expr COMA IDENTIFIER IDENTIFIER ARROW expr CLOSE_PAR;
 
 expr
-	: expr POWER expr #binaryOpExpr
+	: (PLUS | MINUS) expr #unaryOpExpression
+	| expr POWER expr #binaryOpExpr
 	| expr (MUL | DIV) expr #binaryOpExpr
 	| expr (PLUS | MINUS) expr #binaryOpExpr
 	| OPEN_PAR expr CLOSE_PAR #parenthesisExpr
