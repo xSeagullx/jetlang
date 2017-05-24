@@ -3,11 +3,11 @@ package com.xseagullx.jetlang
 import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext
 import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression
-import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression.OperationType
 import com.xseagullx.jetlang.runtime.stack.nodes.ConstExpression
 import com.xseagullx.jetlang.runtime.stack.nodes.Expression
 import com.xseagullx.jetlang.runtime.stack.nodes.LambdaExpression
 import com.xseagullx.jetlang.runtime.stack.nodes.MapExpression
+import com.xseagullx.jetlang.runtime.stack.nodes.OperationType
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture

@@ -54,6 +54,10 @@ class ASMTest extends Specification {
 
 		where:
 		expression          || result       | resultType
+		"+2"                || 2            | Integer
+		"-2"                || -2           | Integer
+		"-2.2"              || -2.2         | Double
+		"+2.2"              || 2.2          | Double
 		"1 + 2"             || 3            | Integer
 		"42 - 12"           || 30           | Integer
 		"4 * 2"             || 8            | Integer
@@ -69,6 +73,31 @@ class ASMTest extends Specification {
 		"2 * 3 + 1 / 4.0"   || 6.25         | Double
 		"2 * (3 + 1) / 4"   || 2            | Integer
 		"+1 + +2"           || 3            | Integer
+		"1+--+2"            || 3            | Integer
+		"1+--+2.1"          || 3.1          | Double
+	}
+
+	@SuppressWarnings("GroovyAssignabilityCheck")
+	@Unroll("Check that variable can be negated. #expression produces #result")
+	def "unary operations on variables test"() {
+		setup:
+		def executionContext = Mock(ExecutionContext)
+
+		when:
+		exec(expression, executionContext)
+
+		then:
+		1 * executionContext.print(_) >> { args ->
+			assert (args as Object[])[0].getClass() == resultType
+			assert (args as Object[])[0] == result
+		}
+
+		where:
+		expression            || result       | resultType
+		"var a = 5\nout -a"   || -5           | Integer
+		"var a = 5.3\nout -a" || -5.3         | Double
+		"var a = 5\nout +a"   || 5            | Integer
+		"var a = 5.3\nout +a" || 5.3          | Double
 	}
 
 	def "ranges"() {

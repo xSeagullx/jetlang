@@ -3,7 +3,7 @@ package com.xseagullx.jetlang.runtime;
 import com.xseagullx.jetlang.JetLangLexer;
 import com.xseagullx.jetlang.JetLangParser;
 import com.xseagullx.jetlang.ParseError;
-import com.xseagullx.jetlang.runtime.stack.nodes.BinaryExpression;
+import com.xseagullx.jetlang.runtime.stack.nodes.OperationType;
 import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStreams;
@@ -55,21 +55,28 @@ public class CSTUtils {
 		return parser;
 	}
 
-	public static BinaryExpression.OperationType getOperationType(JetLangParser.BinaryOpExprContext ctx) {
-		BinaryExpression.OperationType operationType = null;
+	public static OperationType getOperationType(JetLangParser.BinaryOpExprContext ctx) {
+		OperationType operationType = null;
 		if (ctx.PLUS() != null)
-			operationType = BinaryExpression.OperationType.PLUS;
+			operationType = OperationType.PLUS;
 		else if (ctx.MINUS() != null)
-			operationType = BinaryExpression.OperationType.MINUS;
+			operationType = OperationType.MINUS;
 		else if (ctx.DIV() != null)
-			operationType = BinaryExpression.OperationType.DIV;
+			operationType = OperationType.DIV;
 		else if (ctx.MUL() != null)
-			operationType = BinaryExpression.OperationType.MUL;
+			operationType = OperationType.MUL;
 		else if (ctx.POWER() != null)
-			operationType = BinaryExpression.OperationType.POW;
+			operationType = OperationType.POW;
 
 		if (operationType == null)
-			throw new RuntimeException("Unsupported operation " + ctx);
+			throw new ThisShouldNeverHappenException("Unsupported operation " + ctx);
+		return operationType;
+	}
+
+	public static OperationType getOperationType(JetLangParser.UnaryOpExpressionContext ctx) {
+		OperationType operationType = ctx.MINUS() != null ? OperationType.MINUS : ctx.PLUS() != null ? OperationType.PLUS : null;
+		if (operationType == null)
+			throw new ThisShouldNeverHappenException("Unsupported operation " + ctx);
 		return operationType;
 	}
 

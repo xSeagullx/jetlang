@@ -8,10 +8,6 @@ interface BinaryOperation {
 }
 
 public class BinaryExpression extends Expression {
-	public enum OperationType {
-		PLUS, MINUS, MUL, DIV, POW
-	}
-
 	private static final BinaryOperation INT_PLUS = (Number a, Number b) -> a.intValue() + b.intValue();
 	private static final BinaryOperation INT_MINUS = (Number a, Number b) -> a.intValue() - b.intValue();
 	private static final BinaryOperation INT_MUL = (Number a, Number b) -> a.intValue() * b.intValue();

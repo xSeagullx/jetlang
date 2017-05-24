@@ -18,6 +18,13 @@ public abstract class ProgramBase implements Runnable {
 		context.error(String.valueOf(o));
 	}
 
+	protected final Object negate(Object a) {
+		if (a instanceof Double)
+			return -((Double)a);
+		else
+			return -((Integer)a);
+	}
+
 	protected final Object plus(Object a, Object b) {
 		if (hasDouble(a, b))
 			return ((Number)a).doubleValue() + ((Number)b).doubleValue();

@@ -11,11 +11,13 @@ import com.xseagullx.jetlang.runtime.stack.nodes.Expression;
 import com.xseagullx.jetlang.runtime.stack.nodes.InvalidExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.LambdaExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.MapExpression;
+import com.xseagullx.jetlang.runtime.stack.nodes.OperationType;
 import com.xseagullx.jetlang.runtime.stack.nodes.OutStatement;
 import com.xseagullx.jetlang.runtime.stack.nodes.PrintStatement;
 import com.xseagullx.jetlang.runtime.stack.nodes.RangeExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.ReduceExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
+import com.xseagullx.jetlang.runtime.stack.nodes.UnaryExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableDeclaration;
 import com.xseagullx.jetlang.runtime.stack.nodes.VariableExpression;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -33,8 +35,13 @@ class StackMachineVisitor extends CompilationVisitor<TokenInformationHolder> {
 
 	@Override public TokenInformationHolder visit(JetLangParser.BinaryOpExprContext ctx) {
 		List<JetLangParser.ExprContext> exprContexts = ctx.expr();
-		BinaryExpression.OperationType operationType = CSTUtils.getOperationType(ctx);
+		OperationType operationType = CSTUtils.getOperationType(ctx);
 		BinaryExpression binaryExpression = new BinaryExpression(visit(exprContexts.get(0)), visit(exprContexts.get(1)), operationType);
+		return addMetadata(binaryExpression, ctx);
+	}
+
+	@Override public TokenInformationHolder visit(JetLangParser.UnaryOpExpressionContext ctx) {
+		Expression binaryExpression = new UnaryExpression(visit(ctx.expr()), CSTUtils.getOperationType(ctx));
 		return addMetadata(binaryExpression, ctx);
 	}
 
