@@ -13,6 +13,7 @@ public class EditorState {
 	private boolean slowMode;
 	private boolean showThreads;
 	private boolean useByteCodeCompiler;
+	private boolean interactiveMode;
 
 	public void subscribe(Runnable r) {
 		subscriptions.add(r);
@@ -73,6 +74,15 @@ public class EditorState {
 
 	void setUseByteCodeCompiler(boolean useByteCodeCompiler) {
 		this.useByteCodeCompiler = useByteCodeCompiler;
+		notifySubscriptions();
+	}
+
+	public boolean isInteractiveMode() {
+		return interactiveMode;
+	}
+
+	public void setInteractiveMode(boolean value) {
+		interactiveMode = value;
 		notifySubscriptions();
 	}
 }

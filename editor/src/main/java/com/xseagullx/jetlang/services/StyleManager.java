@@ -26,6 +26,8 @@ public class StyleManager {
 	public final MutableAttributeSet number = new SimpleAttributeSet();
 	public final MutableAttributeSet string = new SimpleAttributeSet();
 	public final MutableAttributeSet error = new SimpleAttributeSet();
+	public final MutableAttributeSet currentToken = new SimpleAttributeSet();
+	public final MutableAttributeSet normalTokenBackground = new SimpleAttributeSet();
 
 	public final Color caretColor;
 	public final Color backgroundColor;
@@ -49,6 +51,8 @@ public class StyleManager {
 		this.backgroundColor = backgroundColor;
 		this.foregroundColor = foregroundColor;
 		this.caretColor = caretColor;
+		StyleConstants.setBackground(currentToken, Color.MAGENTA);
+		StyleConstants.setBackground(normalTokenBackground, backgroundColor);
 	}
 
 	private static void initUI(Color backgroundColor) {

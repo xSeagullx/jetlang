@@ -33,8 +33,6 @@ public class TaskManager {
 				log.info("Removing task: " + task);
 				boolean removed = tasks.remove(task.getId(), taskExecution);
 				taskExecution.status = error != null ? TaskExecution.Status.FAILED : TaskExecution.Status.SUCCEEDED;
-				if (error != null)
-					error.printStackTrace();
 				notifyListeners(taskExecution);
 				log.info("Removing task: " + task + " " + (removed ? "Success" : "Failure"));
 				return taskExecution;

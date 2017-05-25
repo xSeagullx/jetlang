@@ -9,7 +9,6 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.StyledDocument;
-import javax.swing.text.StyledEditorKit;
 import java.awt.Component;
 import java.awt.Dimension;
 
@@ -28,7 +27,7 @@ public class OutPanel {
 	public Component getComponent() {
 		JEditorPane editorPane = new JEditorPane();
 		editorPane.setCaretColor(styleManager.caretColor);
-		editorPane.setEditorKit(new StyledEditorKit());
+		editorPane.setEditorKit(new NoWrapsEditorKit());
 		editorPane.setDocument(document);
 		JScrollPane jScrollPane = new JScrollPane(editorPane);
 		jScrollPane.setPreferredSize(preferredSize);

@@ -44,6 +44,7 @@ public class Keymap {
 		keymap.put(new Shortcut(KeyEvent.VK_W, oSSpecificModifier), ActionManager.Action.CLOSE);
 		keymap.put(new Shortcut(KeyEvent.VK_T, oSSpecificModifier), ActionManager.Action.TOGGLE_SLOW_MO);
 		keymap.put(new Shortcut(KeyEvent.VK_I, oSSpecificModifier), ActionManager.Action.TOGGLE_SHOW_THREADS);
+		keymap.put(new Shortcut(KeyEvent.VK_E, oSSpecificModifier), ActionManager.Action.TOGGLE_INTERACTIVE_MODE);
 		keymap.put(new Shortcut(KeyEvent.VK_J, oSSpecificModifier), ActionManager.Action.TOGGLE_USE_BYTECODE_COMPILER);
 		keymap.put(new Shortcut(KeyEvent.VK_ESCAPE), ActionManager.Action.STOP);
 

@@ -42,7 +42,7 @@ public interface ExecutionContext {
 	 * @param e Exception, leading to execution to be stopped. Can be null. Will be ignored, if execution is already stopped.
 	 * @return true if execution has been stopped.
 	 */
-	boolean stopExecution(Throwable e);
+	CompletableFuture<Void> stopExecution(Throwable e, TokenInformationHolder currentToken);
 
 	ExecutionContext copy();
 

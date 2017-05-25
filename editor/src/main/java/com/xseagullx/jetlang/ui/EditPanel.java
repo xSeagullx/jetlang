@@ -1,6 +1,7 @@
 package com.xseagullx.jetlang.ui;
 
 import com.xseagullx.jetlang.ParseError;
+import com.xseagullx.jetlang.TokenInformationHolder;
 import com.xseagullx.jetlang.services.DocumentSnapshot;
 import com.xseagullx.jetlang.services.HighlightTask;
 import com.xseagullx.jetlang.services.StyleManager;
@@ -20,6 +21,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Element;
+import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
@@ -47,6 +49,7 @@ public class EditPanel implements ActionListener {
 	private CaretListener caretListener;
 	private Timer timer;
 	private Runnable documentOnChangeListener;
+	private TokenInformationHolder currentToken;
 
 	public EditPanel(StyleManager styleManager, Dimension preferredSize) {
 		this.styleManager = styleManager;
@@ -201,6 +204,18 @@ public class EditPanel implements ActionListener {
 	/** Will be called by timer every now and then after events like document or caret position update. */
 	@Override public void actionPerformed(ActionEvent e) {
 		timer.stop();
+		showExecutionMarker(null);
 		documentOnChangeListener.run();
+	}
+
+	public void showExecutionMarker(TokenInformationHolder token) {
+		highlightToken(currentToken, styleManager.normalTokenBackground);
+		currentToken = token;
+		highlightToken(currentToken, styleManager.currentToken);
+	}
+
+	private void highlightToken(TokenInformationHolder currentToken, MutableAttributeSet style) {
+		if (currentToken != null)
+			document.setCharacterAttributes(currentToken.getOffset(), currentToken.getLength() + 1, style, false);
 	}
 }

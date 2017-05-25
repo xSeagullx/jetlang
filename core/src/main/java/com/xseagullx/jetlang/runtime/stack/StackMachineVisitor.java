@@ -67,9 +67,10 @@ class StackMachineVisitor extends CompilationVisitor<TokenInformationHolder> {
 	@Override public MapExpression visit(JetLangParser.MapExprContext ctx) {
 		List<JetLangParser.ExprContext> exprContexts = ctx.map().expr();
 		String variable = ctx.map().identifier().IDENTIFIER().getText();
-		LambdaExpression lambda = new LambdaExpression(Collections.singletonList(variable), visit(exprContexts.get(1)));
+		JetLangParser.ExprContext lambdaBody = exprContexts.get(1);
+		LambdaExpression lambda = new LambdaExpression(Collections.singletonList(variable), visit(lambdaBody));
 		Token startOfLambda = ctx.map().identifier().IDENTIFIER().getSymbol();
-		addMetadata(lambda, startOfLambda);
+		addMetadata(lambda, startOfLambda, startOfLambda.getStartIndex(), lambdaBody.getStop().getStopIndex());
 		return addMetadata(new MapExpression(visit(exprContexts.get(0)), lambda), ctx);
 	}
 
@@ -77,9 +78,10 @@ class StackMachineVisitor extends CompilationVisitor<TokenInformationHolder> {
 		JetLangParser.ReduceContext reduce = ctx.reduce();
 		List<JetLangParser.ExprContext> exprContexts = reduce.expr();
 		List<String> variableNames = reduce.IDENTIFIER().stream().map(ParseTree::getText).collect(Collectors.toList());
-		LambdaExpression lambda = new LambdaExpression(variableNames, visit(exprContexts.get(2)));
+		JetLangParser.ExprContext lambdaBody = exprContexts.get(2);
+		LambdaExpression lambda = new LambdaExpression(variableNames, visit(lambdaBody));
 		Token startOfLambda = reduce.IDENTIFIER().get(0).getSymbol();
-		addMetadata(lambda, startOfLambda);
+		addMetadata(lambda, startOfLambda, startOfLambda.getStartIndex(), lambdaBody.getStop().getStopIndex());
 		ReduceExpression reduceExpression = new ReduceExpression(visit(exprContexts.get(0)), visit(exprContexts.get(1)), lambda);
 		return addMetadata(reduceExpression, ctx);
 	}
@@ -109,11 +111,11 @@ class StackMachineVisitor extends CompilationVisitor<TokenInformationHolder> {
 	// Utility methods
 
 	private <T extends TokenInformationHolder> T addMetadata(T node, ParserRuleContext ctx) {
-		return addMetadata(node, ctx.start);
+		return addMetadata(node, ctx.start, ctx.start.getStartIndex(), ctx.stop.getStopIndex());
 	}
 
-	private <T extends TokenInformationHolder> T addMetadata(T node, Token token) {
-		node.setTokenInfo(node.getClass().getSimpleName(), token.getLine(), token.getCharPositionInLine() + 1);
+	private <T extends TokenInformationHolder> T addMetadata(T node, Token token, int offset, int endIndex) {
+		node.setTokenInfo(node.getClass().getSimpleName(), token.getLine(), token.getCharPositionInLine() + 1, offset, endIndex - offset);
 		return node;
 	}
 }

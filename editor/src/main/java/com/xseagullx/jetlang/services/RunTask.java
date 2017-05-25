@@ -27,11 +27,13 @@ public class RunTask extends Task<Void> {
 			else {
 				context.print("Running...");
 				compilationResult.program.execute(context);
+				context.getExecutionOutcome().complete(null);
 				context.print("Execution finished.");
 			}
 		}
 		catch (Throwable e) {
 			context.print("Execution failed.");
+			throw e;
 		}
 		return null;
 	}

@@ -21,4 +21,8 @@ public class JetLangException extends RuntimeException {
 		return (element != null ? (String.valueOf(element) + " ") : "") + getMessage() + "\n" +
 			Arrays.stream(stackTrace).map(TokenInformationHolder::toString).collect(Collectors.joining("\n"));
 	}
+
+	public TokenInformationHolder getElement() {
+		return element;
+	}
 }

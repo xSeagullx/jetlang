@@ -35,7 +35,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 		executionOutcome = new CompletableFuture<>();
 
 		TokenInformationHolder tokenInformationHolder = new TokenInformationHolder();
-		tokenInformationHolder.setTokenInfo("main", 1, 1);
+		tokenInformationHolder.setTokenInfo("main", 1, 1, 0, 0);
 		push(tokenInformationHolder);
 	}
 
@@ -53,6 +53,8 @@ public class SimpleExecutionContext implements ExecutionContext {
 
 	@Override public void defineVariable(String name, Object value) {
 		frames.peek().variables.put(name, value);
+		if (executionListener != null && frames.size() == 1)
+			executionListener.onVariableDefined(this, name, value);
 	}
 
 	@Override public Object getVariable(String name) {
@@ -76,11 +78,11 @@ public class SimpleExecutionContext implements ExecutionContext {
 			statement.exec(this);
 		}
 		catch (JetLangException e) {
-			stopExecution(e);
+			stopExecution(e, statement);
 			throw e;
 		}
 		catch (Throwable e) {
-			if (stopExecution(e))
+			if (stopExecution(e, statement) == null)
 				throw exception("Fatal runtime exception during execution\n" + e.getMessage(), statement);
 			throw e;
 		}
@@ -95,11 +97,11 @@ public class SimpleExecutionContext implements ExecutionContext {
 			return expression.exec(this);
 		}
 		catch (JetLangException e) {
-			stopExecution(e);
+			stopExecution(e, expression);
 			throw e;
 		}
 		catch (Throwable e) {
-			if (stopExecution(e))
+			if (stopExecution(e, expression) == null)
 				throw exception("Fatal runtime exception during execution\n" + e.getMessage(), expression);
 			throw e;
 		}
@@ -111,7 +113,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 			.mapToObj(i -> frames.get(stackTraceSize - 1 - i).caller)
 			.toArray(TokenInformationHolder[]::new);
 		JetLangException exception = new JetLangException(message, holder, stackTrace);
-		error(exception.getDetailedMessage());
+		executionOutcome.completeExceptionally(exception);
 		return exception;
 	}
 
@@ -123,14 +125,18 @@ public class SimpleExecutionContext implements ExecutionContext {
 		return parallelExecutor.map(this, sequence.list, lambda);
 	}
 
-	@Override public boolean stopExecution(Throwable e) {
+	@Override public CompletableFuture<Void> stopExecution(Throwable e, TokenInformationHolder currentToken) {
 		synchronized (executionOutcome) {
 			if (executionOutcome.isDone())
-				return false;
+				return null;
 			else {
-				Throwable exception = e == null ? exception("User requested a cancellation", null) : e;
-				executionOutcome.completeExceptionally(exception);
-				return true;
+				Throwable exception = e == null ? exception("User requested a cancellation", currentToken) : e;
+				if (exception instanceof JetLangException)
+					executionOutcome.completeExceptionally(exception);
+				else {
+					executionOutcome.completeExceptionally(exception(exception.getMessage() != null ? exception.getMessage() : exception.getClass().getSimpleName(), currentToken));
+				}
+				return executionOutcome;
 			}
 		}
 	}

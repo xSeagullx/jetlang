@@ -11,4 +11,7 @@ public interface ExecutionListener {
 
 	default void onError(SimpleExecutionContext context, Object value) {
 	}
+
+	default void onVariableDefined(SimpleExecutionContext context, String name, Object value) {
+	}
 }
