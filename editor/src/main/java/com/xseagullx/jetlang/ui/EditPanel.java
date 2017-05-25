@@ -13,6 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JWindow;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -26,6 +27,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Label;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -34,18 +37,41 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /** UI component responsible for showing code and applying highlighting results */
-public class EditPanel {
+public class EditPanel implements ActionListener {
+	private static final int DELAY_MS = 300;
 	private final StyleManager styleManager;
 	private final Dimension preferredSize;
 	private final StyledDocument document;
 	private BiConsumer<Integer, Integer> caretPositionListener;
 	private Collection<ParseError> errors;
 	private CaretListener caretListener;
+	private Timer timer;
+	private Runnable documentOnChangeListener;
 
 	public EditPanel(StyleManager styleManager, Dimension preferredSize) {
 		this.styleManager = styleManager;
 		this.preferredSize = preferredSize;
+		this.timer = new Timer(DELAY_MS, this);
 		document = new DefaultStyledDocument();
+		document.addDocumentListener(new DocumentListener() {
+			@Override public void insertUpdate(DocumentEvent e) {
+				scheduleUpdate();
+			}
+
+			@Override public void removeUpdate(DocumentEvent e) {
+				scheduleUpdate();
+			}
+
+			private void scheduleUpdate() {
+				if (!timer.isRunning())
+					timer.start();
+				else
+					timer.restart();
+			}
+
+			@Override public void changedUpdate(DocumentEvent e) {
+			}
+		});
 	}
 
 	public Component createComponent() {
@@ -79,19 +105,8 @@ public class EditPanel {
 		return lineNo;
 	}
 
-	public void onChange(Runnable requestHighlight) {
-		document.addDocumentListener(new DocumentListener() {
-			@Override public void insertUpdate(DocumentEvent e) {
-				SwingUtilities.invokeLater(requestHighlight);
-			}
-
-			@Override public void removeUpdate(DocumentEvent e) {
-				SwingUtilities.invokeLater(requestHighlight);
-			}
-
-			@Override public void changedUpdate(DocumentEvent e) {
-			}
-		});
+	public void onChange(Runnable documentOnChangeListener) {
+		this.documentOnChangeListener = documentOnChangeListener;
 	}
 
 	public void setText(String text) {
@@ -179,7 +194,13 @@ public class EditPanel {
 
 	private List<ParseError> errorsAtPos(int caretPos) {
 		return errors == null
-           ? Collections.emptyList()
-           : errors.stream().filter(it -> it.startOffset <= caretPos && it.endOffset >= caretPos).collect(Collectors.toList());
+					 ? Collections.emptyList()
+					 : errors.stream().filter(it -> it.startOffset <= caretPos && it.endOffset >= caretPos).collect(Collectors.toList());
+	}
+
+	/** Will be called by timer every now and then after events like document or caret position update. */
+	@Override public void actionPerformed(ActionEvent e) {
+		timer.stop();
+		documentOnChangeListener.run();
 	}
 }

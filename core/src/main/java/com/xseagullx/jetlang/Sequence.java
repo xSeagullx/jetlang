@@ -2,6 +2,7 @@ package com.xseagullx.jetlang;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -13,10 +14,11 @@ public class Sequence {
 	public final List<Object> list;
 
 	public Sequence(int from, int to) {
-		List<Integer> list = new ArrayList<>(to + 1 - from);
-		for (int i = from; i <= to; i++)
-			list.add(i);
-		this.list = Collections.unmodifiableList(list);
+		Integer[] array = new Integer[to + 1 - from];
+		for (int i = from; i <= to; i++) {
+			array[i - from] = i;
+		}
+		this.list = Collections.unmodifiableList(Arrays.asList(array));
 	}
 
 	public Sequence(List<Object> list) {

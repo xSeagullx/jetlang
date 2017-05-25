@@ -175,7 +175,8 @@ class Editor {
 				}
 			});
 
-			runService.execute(editPanel.getDocumentSnapshot(), context, editorState.isUseByteCodeCompiler());
+			runService.execute(editPanel.getDocumentSnapshot(), context, editorState.isUseByteCodeCompiler())
+				.thenAccept(it -> this.context = null);
 			outputPanel.clear();
 			if (isShowThreads)
 				outputPanel.print("Internal thread info will be shown in all printed messages\n", styleManager.main);
