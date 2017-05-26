@@ -78,6 +78,7 @@ class Editor {
 		new Timer(300, e -> {
 			editPanel.showExecutionMarker(currentToken.get());
 		}).start();
+		editorState.setInteractiveMode(true);
 	}
 
 	private void bindTitleAndState(JFrame frame) {
