@@ -16,7 +16,7 @@ class ParallelExecutionContextTest extends Specification {
 		def parallelContext = context.copy()
 
 		when:
-		parallelContext.stopExecution(null)
+		parallelContext.stopExecution(null, null)
 
 		then:
 		context.getExecutionOutcome().completedExceptionally
@@ -27,7 +27,7 @@ class ParallelExecutionContextTest extends Specification {
 		def parallelContext = context.copy()
 
 		when:
-		context.stopExecution(null)
+		context.stopExecution(null, null)
 
 		then:
 		parallelContext.getExecutionOutcome().completedExceptionally
@@ -35,7 +35,7 @@ class ParallelExecutionContextTest extends Specification {
 
 	def "if context is stopped, expression execution does nothing"() {
 		setup:
-		context.stopExecution(null)
+		context.stopExecution(null, null)
 		Object res
 
 		when:
@@ -49,7 +49,7 @@ class ParallelExecutionContextTest extends Specification {
 	def "if context is stopped, statement execution does nothing"() {
 		setup:
 		def mockStatement = Mock(OutStatement)
-		context.stopExecution(null)
+		context.stopExecution(null, null)
 
 		when:
 		context.exec(mockStatement)

@@ -11,7 +11,7 @@ class SequenceConstructorPerformanceTest {
 
 		Runnable allocateSequence = {
 			def currentTimeMillis = System.currentTimeMillis()
-			System.out.println(new Sequence(1, 1500000).list[10])
+			System.out.println(new Sequence(1, 15000000).list[10])
 			log.info ("Allocation took: " + System.currentTimeMillis() - currentTimeMillis)
 		}
 
@@ -27,6 +27,6 @@ class SequenceConstructorPerformanceTest {
 		thread.start()
 		Thread.sleep(5000)
 		new Thread(allocateSequence).start()
-		thread.join()
+		thread.join(10000)
 	}
 }

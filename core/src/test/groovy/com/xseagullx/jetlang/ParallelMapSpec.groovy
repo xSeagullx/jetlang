@@ -111,7 +111,7 @@ class ParallelMapSpec extends Specification {
 		when:
 		def result = CompletableFuture.runAsync{ context.exec(expression) } // start Worker Thread
 		sleep(100)
-		context.stopExecution(null)
+		context.stopExecution(null, null)
 		result.get()
 
 		then:
