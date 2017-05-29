@@ -11,6 +11,7 @@ import com.xseagullx.jetlang.runtime.stack.nodes.OperationType
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicInteger
@@ -85,7 +86,8 @@ class ParallelMapSpec extends Specification {
 		def result = context.exec(expression)
 
 		then:
-		thrown(JetLangException)
+		def e = thrown(CompletionException)
+		e.cause instanceof JetLangException
 
 		context.getExecutionOutcome().completedExceptionally
 		result == null

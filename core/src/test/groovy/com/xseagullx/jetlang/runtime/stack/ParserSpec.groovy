@@ -4,6 +4,8 @@ import com.xseagullx.jetlang.JetLangException
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.concurrent.CompletionException
+
 class ParserSpec extends Specification {
 	@Unroll("#text produces error: #error")
 	def "parser errors"() {
@@ -30,7 +32,8 @@ class ParserSpec extends Specification {
 		new StackMachineCompiler().parse(text).program.execute(context)
 
 		then:
-		def exception = thrown(JetLangException)
+		def e = thrown(RuntimeException)
+		JetLangException exception = unwrap(e)
 
 		and:
 		exception.message == error
@@ -39,6 +42,10 @@ class ParserSpec extends Specification {
 		where:
 		text                                                       || error                                                   | stacktrace
 		"var a = map({1, 3}, i -> {i, 2})"                         || "Cannot create range. Bounds are inverse {3, 2}"        | ["LambdaExpression 1:21", "main 1:1"]
-		"var a = map({1, 30}, i -> map({i, i + 3}, i2 -> i2 / 0))" || "Fatal runtime exception during execution\n/ by zero"   | ["LambdaExpression 1:43", "LambdaExpression 1:22", "main 1:1"]
+		"var a = map({1, 30}, i -> map({i, i + 3}, i2 -> i2 / 0))" || "/ by zero"                                             | ["LambdaExpression 1:43", "LambdaExpression 1:22", "main 1:1"]
+	}
+
+	JetLangException unwrap(RuntimeException e) {
+		(e instanceof CompletionException ? e.cause : e) as JetLangException
 	}
 }

@@ -1,19 +1,18 @@
 package com.xseagullx.jetlang;
 
-import com.xseagullx.jetlang.runtime.stack.ExecutionListener;
+import com.xseagullx.jetlang.runtime.jvm.JavaBytecodeCompiler;
 import com.xseagullx.jetlang.runtime.stack.ForkJoinExecutor;
 import com.xseagullx.jetlang.runtime.stack.ParallelExecutor;
 import com.xseagullx.jetlang.runtime.stack.SimpleExecutionContext;
+import com.xseagullx.jetlang.runtime.stack.StackMachineCompiler;
 import com.xseagullx.jetlang.services.ActionManager;
-import com.xseagullx.jetlang.services.AlreadyRunningException;
 import com.xseagullx.jetlang.services.ConfigService;
 import com.xseagullx.jetlang.services.DocumentSnapshot;
 import com.xseagullx.jetlang.services.HighlightTask;
 import com.xseagullx.jetlang.services.HighlightingService;
 import com.xseagullx.jetlang.services.Keymap;
-import com.xseagullx.jetlang.services.RunService;
+import com.xseagullx.jetlang.services.RunTask;
 import com.xseagullx.jetlang.services.StyleManager;
-import com.xseagullx.jetlang.services.TaskManager;
 import com.xseagullx.jetlang.ui.Dialogs;
 import com.xseagullx.jetlang.ui.EditPanel;
 import com.xseagullx.jetlang.ui.FileManagingComponent;
@@ -26,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.WindowConstants;
-import javax.swing.text.AttributeSet;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -34,35 +32,34 @@ import java.awt.FontFormatException;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 /** High level component managing editor interactions. */
 class Editor {
 	private static final Logger log = Logger.getLogger(Editor.class.getName());
-	private static final int SLOW_MO_DELAY_MS = 100;
 
 	private final ConfigService configService = ConfigService.create(new File("config.json"));
 	private final StyleManager styleManager = StyleManager.create(configService.config.styles);
 	private final ActionManager actionManager = new ActionManager();
-	private final TaskManager taskManager = new TaskManager();
-	private final RunService runService = new RunService(taskManager);
 	private HighlightingService highlightingService = new HighlightingService(styleManager);
 	private EditorState editorState = new EditorState();
 	private SimpleExecutionContext context;
-	private AtomicReference<TokenInformationHolder> currentToken = new AtomicReference<>();
+	final AtomicReference<TokenInformationHolder> currentToken = new AtomicReference<>();
 
 	private final OutPanel outputPanel;
 	private final EditPanel editPanel;
 	private final MiscPanel miscPanel;
-	private CompletableFuture<Void> lastProgramExecution;
+	private final AtomicReference<CompletableFuture<Void>> lastProgramExecution = new AtomicReference<>();
+	private volatile DocumentSnapshot lastSnapshot;
 
 	Editor() throws IOException, FontFormatException {
 		Dimension editPanelSize = new Dimension(configService.config.width, Math.round(configService.config.height * 0.6f));
 		Dimension miscPanelSize = new Dimension(configService.config.width, 20);
 		Dimension outPanelSize = new Dimension(configService.config.width, configService.config.height - editPanelSize.height - miscPanelSize.height);
 		outputPanel = new OutPanel(styleManager, outPanelSize);
-		miscPanel = new MiscPanel(editorState, taskManager, miscPanelSize);
+		miscPanel = new MiscPanel(editorState, miscPanelSize);
 		editPanel = new EditPanel(styleManager, editPanelSize);
 		editPanel.onChange(this::highlightAndRun);
 		editPanel.setCaretPositionListener((line, col) -> {
@@ -145,15 +142,10 @@ class Editor {
 	private void highlightAndRun() {
 		this.currentToken.set(null);
 		HighlightTask highlightTask = new HighlightTask(editPanel.getDocumentSnapshot(), highlightingService);
-		taskManager.run(highlightTask).thenAccept(it -> {
-				if (!editPanel.isSnapshotValid(highlightTask.getDocumentSnapshot())) {
-					log.info("Highlighting results are discarded");
-					return;
-				}
-
+		CompletableFuture.supplyAsync(highlightTask).thenAccept(it -> {
 				SwingUtilities.invokeLater(() -> {
 					log.info("Applying highlighting results.");
-					it.getFuture().thenAccept(editPanel::applyHighlighting);
+					editPanel.applyHighlighting(it, highlightTask.getDocumentSnapshot());
 				});
 				if (editorState.isInteractiveMode()) {
 					runProgram(highlightTask.getDocumentSnapshot());
@@ -163,88 +155,60 @@ class Editor {
 	}
 
 	private void runProgram(DocumentSnapshot snapshot) {
-		try {
-			currentToken.set(null);
-			boolean isSlowMode = editorState.isSlowMode();
-			boolean isShowThreads = editorState.isShowThreads();
-			SimpleExecutionContext context = new SimpleExecutionContext(new ForkJoinExecutor(ParallelExecutor.EXECUTOR_CHUNK_SIZE));
-			context.setExecutionListener(new ExecutionListener() {
-				@Override public void onExecute(SimpleExecutionContext context, TokenInformationHolder currentToken) {
-					Editor.this.currentToken.set(currentToken);
-					if (isSlowMode)
-						try {
-							Thread.sleep(SLOW_MO_DELAY_MS);
-						}
-						catch (InterruptedException ignored) {
-							// Just wake up
-						}
-				}
-
-				@Override public void onPrint(SimpleExecutionContext context, Object value) {
-					println(value, styleManager.main);
-				}
-
-				@Override public void onError(SimpleExecutionContext context, Object value) {
-					println(value, styleManager.error);
-				}
-
-				@Override public void onVariableDefined(SimpleExecutionContext context, String name, Object value) {
-					println(name + ":" + value.getClass().getSimpleName() + " = " + value, styleManager.main);
-				}
-
-				private void println(Object value, AttributeSet style) {
-					String val = (isShowThreads ? Thread.currentThread().getName() + ": " : "") + String.valueOf(value) + "\n";
-					SwingUtilities.invokeLater(() -> outputPanel.print(val, style));
-				}
-			});
-
-			if (lastProgramExecution == null) { // Nothing is running ATM.
-				lastProgramExecution = runService.execute(snapshot, context, editorState.isUseByteCodeCompiler())
-					.handle((it, exception) -> {
-						this.context.getExecutionOutcome().handle((res, ex) -> {
-							if (ex instanceof JetLangException) {
-								JetLangException jetLangException = (JetLangException)ex;
-								this.context.error(jetLangException.getDetailedMessage());
-								this.currentToken.set(jetLangException.getElement());
-							}
-							else if (ex != null) {
-								this.context.error(ex.getMessage());
-								this.currentToken.set(null);
-							}
-							else {
-								this.currentToken.set(null);
-							}
-							return null;
-						});
-						this.context = null;
-						this.lastProgramExecution = null;
-						return null;
-					});
-			}
-			else {
-				if (this.context != null) {
-					Editor.this.context.stopExecution(null, null).handle((res, exeption) -> {
-						SwingUtilities.invokeLater(() -> runProgram(snapshot));
-						return null;
-					});
-				}
-			}
-
-			// TODO do real queue, to run last version after previous execution finished.
-
-			outputPanel.clear();
-			if (isShowThreads)
-				outputPanel.print("Internal thread info will be shown in all printed messages\n", styleManager.main);
-			this.context = context;
-		}
-		catch (AlreadyRunningException e) {
-			if (!editorState.isInteractiveMode())
+		// Event thread
+		synchronized (lastProgramExecution) {
+			CompletableFuture<Void> lastExecution = lastProgramExecution.get();
+			if (!editorState.isInteractiveMode() && lastExecution != null) {
 				Dialogs.showMessage("You can run only one instance of program. Please wait or cancel old one with [ESC] key.");
+				return;
+			}
+			if (lastExecution != null) {
+				lastSnapshot = snapshot;
+				this.context.stopExecution(null, null);
+				return;
+			}
+		}
+
+		SimpleExecutionContext context = new SimpleExecutionContext(new ForkJoinExecutor(ParallelExecutor.EXECUTOR_CHUNK_SIZE));
+		JetLangCompiler compiler = editorState.isUseByteCodeCompiler() ? new JavaBytecodeCompiler() : new StackMachineCompiler();
+		context.setExecutionListener(new EditorExecutionListener(this, styleManager, outputPanel, editorState.isSlowMode(), editorState.isShowThreads()));
+		this.context = context;
+		miscPanel.showProgressBar();
+
+		CompletableFuture<Void> handle = CompletableFuture.supplyAsync(new RunTask(compiler, snapshot, context))
+			.handle((res, ex) -> {
+				ex = ex instanceof CompletionException ? ex.getCause() : ex;
+
+				if (ex instanceof JetLangException) {
+					JetLangException jetLangException = (JetLangException)ex;
+					this.context.error(jetLangException.getDetailedMessage());
+					this.currentToken.set(jetLangException.getElement());
+				} else if (ex != null) {
+					this.context.error(ex.getMessage());
+					this.currentToken.set(null);
+				} else {
+					this.currentToken.set(null);
+				}
+				miscPanel.hideProgressBar();
+				synchronized (lastProgramExecution) {
+					lastProgramExecution.set(null);
+					this.context = null;
+					if (lastSnapshot != null) {
+						DocumentSnapshot snapshotCopy = lastSnapshot;
+						lastSnapshot = null;
+						SwingUtilities.invokeLater(() -> runProgram(snapshotCopy));
+					}
+				}
+				return null;
+			});
+		synchronized (lastProgramExecution) {
+			lastProgramExecution.set(handle);
 		}
 	}
 
 	private void stopProgram() {
-		if (context != null)
+		if (context != null) {
 			context.stopExecution(null, null);
+		}
 	}
 }

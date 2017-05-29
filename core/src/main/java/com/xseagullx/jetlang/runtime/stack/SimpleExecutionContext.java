@@ -7,6 +7,7 @@ import com.xseagullx.jetlang.TokenInformationHolder;
 import com.xseagullx.jetlang.runtime.stack.nodes.Expression;
 import com.xseagullx.jetlang.runtime.stack.nodes.LambdaExpression;
 import com.xseagullx.jetlang.runtime.stack.nodes.Statement;
+import com.xseagullx.jetlang.utils.ThisShouldNeverHappenException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -82,9 +83,9 @@ public class SimpleExecutionContext implements ExecutionContext {
 			throw e;
 		}
 		catch (Throwable e) {
-			if (stopExecution(e, statement) == null)
-				throw exception("Fatal runtime exception during execution\n" + e.getMessage(), statement);
-			throw e;
+			stopExecution(e, statement);
+			executionOutcome.getNow(null); // It's cancelled at this point, just getting an exception to propagate and stop parallel execution.
+			throw new ThisShouldNeverHappenException("Exception shall be thrown one line above");
 		}
 	}
 
@@ -101,17 +102,20 @@ public class SimpleExecutionContext implements ExecutionContext {
 			throw e;
 		}
 		catch (Throwable e) {
-			if (stopExecution(e, expression) == null)
-				throw exception("Fatal runtime exception during execution\n" + e.getMessage(), expression);
-			throw e;
+			stopExecution(e, expression);
+			executionOutcome.getNow(null); // It's cancelled at this point, just getting an exception to propagate and stop parallel execution.
+			throw new ThisShouldNeverHappenException("Exception shall be thrown one line above");
 		}
 	}
 
-	@Override public JetLangException exception(String message, TokenInformationHolder holder) {
-		int stackTraceSize = frames.size();
-		TokenInformationHolder[] stackTrace = IntStream.range(0, stackTraceSize)
-			.mapToObj(i -> frames.get(stackTraceSize - 1 - i).caller)
-			.toArray(TokenInformationHolder[]::new);
+	@Override public JetLangException exception(String message, TokenInformationHolder holder, boolean isExternal) {
+		TokenInformationHolder[] stackTrace = null;
+		if (!isExternal) {
+			int stackTraceSize = frames.size();
+			stackTrace = IntStream.range(0, stackTraceSize)
+				.mapToObj(i -> frames.get(stackTraceSize - 1 - i).caller)
+				.toArray(TokenInformationHolder[]::new);
+		}
 		JetLangException exception = new JetLangException(message, holder, stackTrace);
 		executionOutcome.completeExceptionally(exception);
 		return exception;
@@ -130,7 +134,7 @@ public class SimpleExecutionContext implements ExecutionContext {
 			if (executionOutcome.isDone())
 				return null;
 			else {
-				Throwable exception = e == null ? exception("User requested a cancellation", currentToken) : e;
+				Throwable exception = e == null ? exception("User requested a cancellation", null, true) : e;
 				if (exception instanceof JetLangException)
 					executionOutcome.completeExceptionally(exception);
 				else {
@@ -160,7 +164,9 @@ public class SimpleExecutionContext implements ExecutionContext {
 	}
 
 	private void handleCancellation(TokenInformationHolder node) {
-		if (executionOutcome.isDone())
+		if (executionOutcome.isCompletedExceptionally())
+			executionOutcome.getNow(null); // Will throw an exception
+		else if (executionOutcome.isDone())
 			throw new JetLangException("Stop execution", node, new TokenInformationHolder[0]);
 	}
 

@@ -18,8 +18,12 @@ public class JetLangException extends RuntimeException {
 	}
 
 	public String getDetailedMessage() {
-		return (element != null ? (String.valueOf(element) + " ") : "") + getMessage() + "\n" +
-			Arrays.stream(stackTrace).map(TokenInformationHolder::toString).collect(Collectors.joining("\n"));
+		return (element != null ? (String.valueOf(element) + " ") : "") + getMessage() +
+		(
+			stackTrace == null
+			? ""
+			: "\n" + Arrays.stream(stackTrace).map(TokenInformationHolder::toString).collect(Collectors.joining("\n"))
+		);
 	}
 
 	public TokenInformationHolder getElement() {

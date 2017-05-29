@@ -1,8 +1,8 @@
 package com.xseagullx.jetlang.services;
 
-import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
-public abstract class Task<T> implements Callable<T> {
+public abstract class Task<T> implements Supplier<T> {
 	public abstract String getId();
 
 	@Override public String toString() {

@@ -29,10 +29,17 @@ public interface ExecutionContext {
 	Object exec(Expression expression);
 
 	/**
-	 * Constructs JetLang exception with proper (JetLang) stacktrace.
-	 * Prints error in via {@link #print(Object)} method.
+	 * Constructs JetLang exception and updates execution outcome.
+	 * Builds execution stacktrace is collected.
 	 */
-	JetLangException exception(String message, TokenInformationHolder holder);
+	default JetLangException exception(String message, TokenInformationHolder holder) {
+		return exception(message, holder, false);
+	}
+
+	/**
+	 * Constructs JetLang exception and updates execution outcome. no stacktrace is collected.
+	 */
+	JetLangException exception(String message, TokenInformationHolder holder, boolean isExternal);
 
 	List<Object> map(Sequence list, LambdaExpression lambda);
 	Object reduce(Sequence sequence, Object initialValue, LambdaExpression lambda);

@@ -7,6 +7,8 @@ import com.xseagullx.jetlang.runtime.stack.nodes.ConstExpression
 import com.xseagullx.jetlang.runtime.stack.nodes.OutStatement
 import spock.lang.Specification
 
+import java.util.concurrent.CompletionException
+
 class ParallelExecutionContextTest extends Specification {
 	ParallelExecutor forkJoinExecutor = Stub(ForkJoinExecutor, constructorArgs: [100])
 	def context = new SimpleExecutionContext(forkJoinExecutor)
@@ -42,7 +44,8 @@ class ParallelExecutionContextTest extends Specification {
 		res = context.exec(new ConstExpression<Integer>(5))
 
 		then:
-		thrown JetLangException
+		def e = thrown(CompletionException)
+		e.cause instanceof JetLangException
 		res == null
 	}
 
@@ -55,7 +58,8 @@ class ParallelExecutionContextTest extends Specification {
 		context.exec(mockStatement)
 
 		then:
-		thrown JetLangException
+		def e = thrown(CompletionException)
+		e.cause instanceof JetLangException
 		0 * mockStatement.exec(context)
 	}
 }

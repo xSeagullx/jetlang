@@ -36,10 +36,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /** UI component responsible for showing code and applying highlighting results */
 public class EditPanel implements ActionListener {
+	private static final Logger log = Logger.getLogger(EditPanel.class.getName());
+
 	private static final int DELAY_MS = 300;
 	private final StyleManager styleManager;
 	private final Dimension preferredSize;
@@ -123,7 +126,12 @@ public class EditPanel implements ActionListener {
 		}
 	}
 
-	public void applyHighlighting(HighlightTask.HighlightingResults highlightingResults) {
+	public void applyHighlighting(HighlightTask.HighlightingResults highlightingResults, DocumentSnapshot documentSnapshot) {
+		if (!isSnapshotValid(documentSnapshot)) {
+			log.info("Highlighting results are discarded");
+			return;
+		}
+
 		document.setCharacterAttributes(0, document.getLength(), new SimpleAttributeSet(), true);
 		for (StyledChunk it : highlightingResults.styledChunks)
 			document.setCharacterAttributes(it.offset, it.length, it.attributeSet, true);
@@ -144,7 +152,7 @@ public class EditPanel implements ActionListener {
 		this.caretPositionListener = caretPositionListener;
 	}
 
-	public boolean isSnapshotValid(DocumentSnapshot documentSnapshot) {
+	private boolean isSnapshotValid(DocumentSnapshot documentSnapshot) {
 		return Objects.equals(documentSnapshot.text, getDocumentSnapshot().text);
 	}
 

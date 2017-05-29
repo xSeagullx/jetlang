@@ -5,18 +5,21 @@ import com.xseagullx.jetlang.ExecutionContext;
 import com.xseagullx.jetlang.JetLangCompiler;
 import com.xseagullx.jetlang.ParseError;
 
-public class RunTask extends Task<Void> {
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
+
+public class RunTask extends Task<CompletableFuture<Void>> implements Supplier<CompletableFuture<Void>> {
 	private final JetLangCompiler compiler;
 	private DocumentSnapshot documentSnapshot;
 	private ExecutionContext context;
 
-	RunTask(JetLangCompiler compiler, DocumentSnapshot documentSnapshot, ExecutionContext context) {
+	public RunTask(JetLangCompiler compiler, DocumentSnapshot documentSnapshot, ExecutionContext context) {
 		this.compiler = compiler;
 		this.documentSnapshot = documentSnapshot;
 		this.context = context;
 	}
 
-	@Override public Void call() {
+	@Override public CompletableFuture<Void> get() {
 		try {
 			context.print("Building...");
 			CompilationResult compilationResult = compiler.parse(documentSnapshot.text);
@@ -35,7 +38,7 @@ public class RunTask extends Task<Void> {
 			context.print("Execution failed.");
 			throw e;
 		}
-		return null;
+		return context.getExecutionOutcome();
 	}
 
 	@Override public String getId() {

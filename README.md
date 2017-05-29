@@ -16,6 +16,7 @@ cd editor/build/install/editor
 4. __(CMD/Ctrl)+Q__ - quit editor application.
 5. __(CMD/Ctrl)+Enter__ - run JetLang program.
 5. __(CMD/Ctrl)+T__ - toggle slow mode (adds 100 ms delay to every step of JetLang program). Active only on the next run.
+5. __(CMD/Ctrl)+T__ - toggle interactive mode. In this mode programm is executed as soon as it's updated. Any execution running before will be cancelled. This mode is __on by default__.
 6. __(CMD/Ctrl)+I__ - toggle display of threads in out panel. Active only on the next run.
 7. __(CMD/Ctrl)+J__ - toggle between "stack" or "JVM bytecode" based compiler. Active only on the next run.
 8. __Esc__ - stops currently running JetLang program.

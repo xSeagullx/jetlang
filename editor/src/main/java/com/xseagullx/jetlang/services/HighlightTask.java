@@ -23,15 +23,15 @@ public class HighlightTask extends Task<HighlightTask.HighlightingResults> {
 		this.documentSnapshot = documentSnapshot;
 	}
 
-	@Override public HighlightingResults call() {
-		return highlightingService.highlight(documentSnapshot);
-	}
-
 	public DocumentSnapshot getDocumentSnapshot() {
 		return documentSnapshot;
 	}
 
 	@Override public String getId() {
 		return "highlightTask:" + documentSnapshot.getId();
+	}
+
+	@Override public HighlightingResults get() {
+		return highlightingService.highlight(documentSnapshot);
 	}
 }
